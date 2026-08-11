@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GovFlow AI — Automação Governamental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root {
+    --green-deep:    #1e3d1a;
+    --green-forest:  #2d5a27;
+    --green-mid:     #3d7a35;
+    --green-light:   #5a9e50;
+    --green-mist:    #dcefd9;
+    --beige:         #f5f5dc;
+    --beige-warm:    #ede9d0;
+    --beige-dark:    #d8d4b8;
+    --white:         #ffffff;
+    --ink:           #111a0f;
+    --ink-mid:       #3b4a38;
+    --ink-soft:      #6b7c68;
+    --ink-ghost:     #a8b8a4;
+    --border:        #d0dccb;
+    --border-light:  #e8f0e5;
+    --console-bg:    #0e1a0c;
+    --console-green: #4ade80;
+    --console-dim:   #2a5a22;
+    --error:         #c0392b;
+    --warn:          #d4a017;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { font-size: 16px; scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--beige);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.6;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(245,245,220,0.88);
+    backdrop-filter: blur(18px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+    padding: 0 clamp(1rem, 4vw, 2.5rem);
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .logo-mark {
+    width: 34px; height: 34px;
+    background: var(--green-forest);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+
+  .logo-mark svg { color: var(--beige); width: 18px; height: 18px; }
+
+  .logo-text {
+    display: flex; flex-direction: column; line-height: 1;
+  }
+
+  .logo-title {
+    font-size: 1rem; font-weight: 800;
+    color: var(--green-deep); letter-spacing: -0.03em;
+  }
+
+  .logo-sub {
+    font-size: 0.6rem; font-weight: 500;
+    color: var(--ink-soft); letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .badge-status {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 100px;
+    background: var(--green-mist);
+    border: 1px solid var(--green-light);
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--green-forest);
+    letter-spacing: 0.04em;
+  }
+
+  .badge-status::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green-light);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .header-user {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--green-forest);
+    display: grid; place-items: center;
+    color: white;
+    font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0;
+    cursor: pointer;
+    border: 2px solid var(--border);
+    transition: border-color 0.2s;
+  }
+
+  .header-user:hover { border-color: var(--green-mid); }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    position: relative; z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
+    display: flex; flex-direction: column; gap: 2rem;
+  }
+
+  /* ── PAGE TITLE ── */
+  .page-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .page-title {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 400; font-style: italic;
+    color: var(--green-deep);
+    line-height: 1.1;
+  }
+
+  .page-title strong {
+    font-style: normal;
+    font-weight: 400;
+    display: block;
+    color: var(--ink);
+  }
+
+  .page-meta {
+    font-size: 0.78rem; font-weight: 500;
+    color: var(--ink-soft); letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+    padding-bottom: 4px;
+  }
+
+  /* ── STEPPER ── */
+  .stepper-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 1px 4px rgba(45,90,39,0.06), 0 4px 24px rgba(45,90,39,0.04);
+  }
+
+  .stepper {
+    display: flex; align-items: center; gap: 0;
+    width: 100%; overflow: hidden;
+  }
+
+  .step {
+    display: flex; align-items: center; flex: 1;
+    position: relative;
+  }
+
+  .step:last-child { flex: 0 0 auto; }
+
+  .step-body {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px; flex-shrink: 0; cursor: default;
+    min-width: 60px;
+  }
+
+  .step-icon-wrap {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    border: 2px solid var(--border);
+    background: var(--beige);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+
+  .step-icon-wrap svg { color: var(--ink-ghost); transition: color 0.3s; width: 20px; height: 20px; }
+
+  .step-label {
+    font-size: 0.68rem; font-weight: 600;
+    color: var(--ink-ghost); letter-spacing: 0.04em;
+    text-align: center; white-space: nowrap;
+    transition: color 0.3s;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .step-connector {
+    flex: 1; height: 2px;
+    background: var(--border);
+    margin: 0 4px;
+    margin-bottom: 28px;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .step-connector-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--green-forest), var(--green-mid));
+    border-radius: 2px;
+    transition: width 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  /* Step states */
+  .step.active .step-icon-wrap {
+    background: var(--green-forest);
+    border-color: var(--green-forest);
+    box-shadow: 0 0 0 6px rgba(45,90,39,0.12);
+    animation: step-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .step.active .step-icon-wrap svg { color: white; }
+  .step.active .step-label { color: var(--green-forest); }
+
+  .step.done .step-icon-wrap {
+    background: var(--green-mist);
+    border-color: var(--green-light);
+  }
+  .step.done .step-icon-wrap svg { color: var(--green-forest); }
+  .step.done .step-label { color: var(--green-mid); }
+
+  .step.done .step-connector-fill { width: 100%; }
+
+  @keyframes step-pop {
+    0% { transform: scale(0.8); }
+    100% { transform: scale(1); }
+  }
+
+  /* ── DROP ZONE ── */
+  .dropzone-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 700px) {
+    .dropzone-section { grid-template-columns: 1fr; }
+  }
+
+  .dropzone {
+    background: var(--white);
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 1rem; text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    min-height: 220px;
+    position: relative; overflow: hidden;
+  }
+
+  .dropzone::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(45,90,39,0.05) 0%, transparent 70%);
+    opacity: 0; transition: opacity 0.3s;
+  }
+
+  .dropzone:hover, .dropzone.dragover {
+    border-color: var(--green-forest);
+    border-style: solid;
+    box-shadow: 0 0 0 4px rgba(45,90,39,0.08), inset 0 0 40px rgba(45,90,39,0.03);
+  }
+
+  .dropzone:hover::before, .dropzone.dragover::before { opacity: 1; }
+
+  .dropzone.dragover { background: var(--green-mist); }
+
+  .dropzone-icon {
+    width: 56px; height: 56px;
+    background: var(--beige);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: grid; place-items: center;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .dropzone:hover .dropzone-icon {
+    transform: translateY(-4px) scale(1.05);
+    background: var(--green-mist);
+    border-color: var(--green-light);
+  }
+
+  .dropzone-icon svg { color: var(--green-forest); width: 26px; height: 26px; }
+
+  .dropzone h3 {
+    font-size: 1rem; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.02em;
+  }
+
+  .dropzone p {
+    font-size: 0.8rem; font-weight: 500;
+    color: var(--ink-soft); line-height: 1.5;
+  }
+
+  .dropzone-chips {
+    display: flex; gap: 6px;
+  }
+
+  .chip {
+    padding: 4px 10px; border-radius: 100px;
+    background: var(--beige-warm); border: 1px solid var(--beige-dark);
+    font-size: 0.68rem; font-weight: 700;
+    color: var(--ink-mid); letter-spacing: 0.04em; text-transform: uppercase;
+  }
+
+  .file-btn {
+    padding: 8px 20px;
+    background: var(--green-forest);
+    color: white; border: none;
+    border-radius: 8px; cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem; font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .file-btn:hover {
+    background: var(--green-deep);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(45,90,39,0.3);
+  }
+
+  .file-btn svg { width: 14px; height: 14px; }
+  #file-input { display: none; }
+
+  /* Upload Preview */
+  .upload-preview {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+
+  .preview-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .section-label {
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .section-label svg { width: 14px; height: 14px; }
+
+  .preview-empty {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; flex: 1;
+    padding: 2rem; text-align: center; gap: 8px;
+    min-height: 140px;
+  }
+
+  .preview-empty svg { color: var(--ink-ghost); width: 32px; height: 32px; }
+  .preview-empty p { font-size: 0.78rem; color: var(--ink-ghost); font-weight: 500; }
+
+  .file-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    background: var(--beige);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    animation: slide-in 0.3s ease;
+    transition: all 0.2s;
+  }
+
+  .file-item:hover { border-color: var(--green-light); }
+
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .file-thumb {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: var(--green-mist);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+
+  .file-thumb svg { color: var(--green-forest); width: 20px; height: 20px; }
+
+  .file-info { flex: 1; min-width: 0; }
+
+  .file-name {
+    font-size: 0.82rem; font-weight: 600;
+    color: var(--ink); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .file-meta { font-size: 0.7rem; color: var(--ink-soft); font-weight: 500; }
+
+  .file-remove {
+    background: none; border: none; cursor: pointer;
+    color: var(--ink-ghost); padding: 4px;
+    border-radius: 4px; transition: all 0.2s;
+    display: grid; place-items: center;
+  }
+
+  .file-remove:hover { color: var(--error); background: rgba(192,57,43,0.08); }
+  .file-remove svg { width: 14px; height: 14px; }
+
+  .process-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--green-forest);
+    color: white; border: none;
+    border-radius: 10px; cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.88rem; font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  .process-btn:hover:not(:disabled) {
+    background: var(--green-deep);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(45,90,39,0.35);
+  }
+
+  .process-btn:disabled {
+    opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none;
+  }
+
+  .process-btn svg { width: 16px; height: 16px; }
+
+  /* ── BOTTOM GRID ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 800px) {
+    .bottom-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── LIVE FEED ── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(45,90,39,0.05);
+    display: flex; flex-direction: column;
+  }
+
+  .card-header {
+    padding: 1rem 1.4rem;
+    border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--beige);
+  }
+
+  .card-header-actions {
+    display: flex; gap: 6px;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-red { background: #ff5f57; }
+  .dot-yellow { background: #febc2e; }
+  .dot-green { background: #28c840; }
+
+  .console {
+    background: var(--console-bg);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    padding: 1rem 1.2rem;
+    flex: 1; min-height: 260px; max-height: 340px;
+    overflow-y: auto; line-height: 1.7;
+    scrollbar-width: thin;
+    scrollbar-color: var(--console-dim) transparent;
+  }
+
+  .console::-webkit-scrollbar { width: 4px; }
+  .console::-webkit-scrollbar-track { background: transparent; }
+  .console::-webkit-scrollbar-thumb { background: var(--console-dim); border-radius: 4px; }
+
+  .log-line {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 1px 0;
+    animation: log-appear 0.25s ease;
+  }
+
+  @keyframes log-appear {
+    from { opacity: 0; transform: translateX(-6px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .log-time { color: var(--console-dim); flex-shrink: 0; }
+  .log-prefix { flex-shrink: 0; }
+
+  .log-info .log-prefix  { color: var(--console-green); }
+  .log-warn .log-prefix  { color: #facc15; }
+  .log-error .log-prefix { color: #f87171; }
+  .log-sys .log-prefix   { color: #60a5fa; }
+
+  .log-msg { color: #d1fae5; word-break: break-word; }
+  .log-info .log-msg  { color: #d1fae5; }
+  .log-warn .log-msg  { color: #fef3c7; }
+  .log-error .log-msg { color: #fee2e2; }
+  .log-sys .log-msg   { color: #dbeafe; }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--console-green);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle; margin-left: 4px;
+    border-radius: 1px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ── DATA CARD ── */
+  .data-card-body {
+    padding: 1.2rem 1.4rem;
+    flex: 1;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 0.9rem;
+  }
+
+  .data-empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    flex: 1; text-align: center; gap: 12px;
+    padding: 2rem; min-height: 200px;
+  }
+
+  .data-empty-icon {
+    width: 52px; height: 52px;
+    background: var(--beige);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: grid; place-items: center;
+  }
+
+  .data-empty-icon svg { color: var(--ink-ghost); width: 24px; height: 24px; }
+  .data-empty p { font-size: 0.78rem; color: var(--ink-ghost); font-weight: 500; }
+  .data-empty span { font-size: 0.68rem; color: var(--ink-ghost); }
+
+  .data-field {
+    display: flex; flex-direction: column; gap: 3px;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--border-light);
+    animation: slide-in 0.35s ease;
+  }
+
+  .data-field:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .data-key {
+    font-size: 0.66rem; font-weight: 700;
+    color: var(--ink-ghost); letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .data-key svg { width: 11px; height: 11px; }
+
+  .data-val {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--ink); letter-spacing: -0.01em;
+  }
+
+  .data-val.highlight {
+    color: var(--green-forest);
+    font-size: 1rem;
+  }
+
+  .confidence-bar {
+    height: 4px; background: var(--border-light);
+    border-radius: 2px; overflow: hidden; margin-top: 3px;
+  }
+
+  .confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-forest), var(--green-mid));
+    border-radius: 2px;
+    transition: width 1s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+
+  .confidence-label {
+    font-size: 0.68rem; color: var(--green-forest); font-weight: 600;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── SUBMIT FOOTER ── */
+  .submit-footer {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.4rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+    box-shadow: 0 1px 4px rgba(45,90,39,0.05);
+  }
+
+  .footer-info {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+
+  .footer-title {
+    font-size: 0.9rem; font-weight: 700;
+    color: var(--ink); letter-spacing: -0.02em;
+  }
+
+  .footer-sub {
+    font-size: 0.75rem; font-weight: 500;
+    color: var(--ink-soft);
+  }
+
+  .footer-actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+
+  .btn-outline {
+    padding: 10px 20px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 8px; cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem; font-weight: 700;
+    color: var(--ink-mid); letter-spacing: 0.02em;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .btn-outline:hover {
+    border-color: var(--green-forest);
+    color: var(--green-forest);
+  }
+
+  .btn-outline svg { width: 14px; height: 14px; }
+
+  .btn-primary {
+    padding: 10px 24px;
+    background: var(--green-forest);
+    color: white; border: none;
+    border-radius: 8px; cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem; font-weight: 700;
+    letter-spacing: 0.02em;
+    transition: all 0.25s;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: var(--green-deep);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(45,90,39,0.35);
+  }
+
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-primary svg { width: 14px; height: 14px; }
+
+  /* ── TOAST ── */
+  .toast-container {
+    position: fixed; top: 80px; right: 20px;
+    z-index: 200;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .toast {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.82rem; font-weight: 600;
+    color: var(--ink);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    animation: toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 300px;
+  }
+
+  .toast.success { border-left: 3px solid var(--green-forest); }
+  .toast.error { border-left: 3px solid var(--error); }
+  .toast.info { border-left: 3px solid #3b82f6; }
+
+  .toast svg { flex-shrink: 0; }
+  .toast.success svg { color: var(--green-forest); }
+  .toast.error svg { color: var(--error); }
+  .toast.info svg { color: #3b82f6; }
+
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateX(40px) scale(0.9); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+  }
+
+  /* ── MOBILE SCANNER HINT ── */
+  .mobile-hint {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    .mobile-hint {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, var(--green-mist), rgba(245,245,220,0.8));
+      border: 1px solid var(--green-light);
+      border-radius: 12px;
+      font-size: 0.78rem; font-weight: 600;
+      color: var(--green-deep);
+    }
+    .mobile-hint svg { color: var(--green-forest); flex-shrink: 0; }
+  }
+
+  /* ── PROGRESS LABEL ── */
+  .progress-meta {
+    margin-top: 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .progress-text {
+    font-size: 0.75rem; font-weight: 600;
+    color: var(--ink-soft);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .progress-pct {
+    font-size: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    color: var(--green-forest);
+  }
+
+  .overall-bar {
+    height: 3px; background: var(--border-light);
+    border-radius: 2px; overflow: hidden;
+    margin-top: 6px;
+  }
+
+  .overall-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green-forest), var(--green-mid), var(--green-light));
+    border-radius: 2px;
+    transition: width 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+    width: 0%;
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 500px) {
+    .step-label { display: none; }
+    .stepper-card { padding: 1.2rem; }
+    .page-header { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="logo-text">
+      <span class="logo-title">GovFlow AI</span>
+      <span class="logo-sub">Automação Governamental</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="escritorio-label" style="font-size:0.72rem;font-weight:600;color:var(--ink-soft);"></span>
+    <a href="/webchat.html" style="font-size:0.72rem;font-weight:700;color:var(--green-forest);text-decoration:none;border:1px solid var(--border);padding:6px 12px;border-radius:100px;">💬 Webchat</a>
+    <div class="badge-status">SISTEMA ATIVO</div>
+    <div class="header-user" id="header-user" title="Sair" style="cursor:pointer;">AG</div>
+  </div>
+</header>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- Mobile hint -->
+  <div class="mobile-hint">
+    <i data-lucide="camera" style="width:20px;height:20px"></i>
+    <span>Use a câmera do smartphone para escanear documentos diretamente</span>
+  </div>
+
+  <!-- Page Title -->
+  <div class="page-header">
+    <div>
+      <p class="page-meta">
+        <i data-lucide="zap" style="width:13px;height:13px"></i>
+        Pipeline de Automação
+      </p>
+      <h1 class="page-title">
+        Envio Inteligente
+        <strong>de Documentos Gov.</strong>
+      </h1>
+    </div>
+    <div class="page-meta">
+      <i data-lucide="calendar" style="width:13px;height:13px"></i>
+      <span id="datetime-label"></span>
+    </div>
+  </div>
+
+  <!-- STEPPER -->
+  <div class="stepper-card">
+    <div class="stepper" id="stepper">
+
+      <div class="step active" id="step-0">
+        <div class="step-body">
+          <div class="step-icon-wrap">
+            <i data-lucide="upload-cloud"></i>
+          </div>
+          <span class="step-label">Upload</span>
+        </div>
+      </div>
+
+      <div class="step" id="step-1">
+        <div class="step-connector">
+          <div class="step-connector-fill" id="conn-0"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-icon-wrap">
+            <i data-lucide="brain-circuit"></i>
+          </div>
+          <span class="step-label">Extração IA</span>
+        </div>
+      </div>
+
+      <div class="step" id="step-2">
+        <div class="step-connector">
+          <div class="step-connector-fill" id="conn-1"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-icon-wrap">
+            <i data-lucide="bot"></i>
+          </div>
+          <span class="step-label">Proc. RPA</span>
+        </div>
+      </div>
+
+      <div class="step" id="step-3">
+        <div class="step-connector">
+          <div class="step-connector-fill" id="conn-2"></div>
+        </div>
+        <div class="step-body">
+          <div class="step-icon-wrap">
+            <i data-lucide="check-circle-2"></i>
+          </div>
+          <span class="step-label">Finalizado</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="progress-meta">
+      <span class="progress-text" id="step-desc">
+        <i data-lucide="circle-dot" style="width:12px;height:12px"></i>
+        Aguardando upload de documento...
+      </span>
+      <span class="progress-pct" id="pct-label">0%</span>
+    </div>
+    <div class="overall-bar">
+      <div class="overall-fill" id="overall-fill"></div>
+    </div>
+  </div>
+
+  <!-- DROPZONE + PREVIEW -->
+  <div class="dropzone-section">
+
+    <div class="dropzone" id="dropzone"
+      ondragover="handleDragOver(event)"
+      ondragleave="handleDragLeave(event)"
+      ondrop="handleDrop(event)"
+      onclick="document.getElementById('file-input').click()">
+      <div class="dropzone-icon">
+        <i data-lucide="file-scan"></i>
+      </div>
+      <div>
+        <h3>Arraste ou selecione o arquivo</h3>
+        <p>Suporte a documentos digitalizados,<br/>CNH, certidões e formulários Gov.</p>
+      </div>
+      <div class="dropzone-chips">
+        <span class="chip">PDF</span>
+        <span class="chip">PNG</span>
+        <span class="chip">JPG</span>
+      </div>
+      <button class="file-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()">
+        <i data-lucide="folder-open"></i>
+        Selecionar Arquivo
+      </button>
+      <input type="file" id="file-input" accept=".pdf,.png,.jpg,.jpeg" onchange="handleFileSelect(event)" />
+    </div>
+
+    <div class="upload-preview">
+      <div class="preview-header">
+        <span class="section-label">
+          <i data-lucide="layers"></i>
+          Documentos na Fila
+        </span>
+        <span class="section-label" id="file-count">0 arquivo(s)</span>
+      </div>
+
+      <div id="file-list">
+        <div class="preview-empty" id="empty-state">
+          <i data-lucide="inbox" style="width:32px;height:32px;color:var(--ink-ghost)"></i>
+          <p>Nenhum arquivo carregado</p>
+        </div>
+      </div>
+
+      <button class="process-btn" id="process-btn" disabled onclick="startProcessing()">
+        <i data-lucide="play-circle"></i>
+        Iniciar Processamento
+      </button>
+    </div>
+
+  </div>
+
+  <!-- LIVE FEED + DATA CARD -->
+  <div class="bottom-grid">
+
+    <!-- Console Live Feed -->
+    <div class="card">
+      <div class="card-header">
+        <span class="section-label">
+          <i data-lucide="terminal"></i>
+          Live Feed — RPA Console
+        </span>
+        <div class="card-header-actions">
+          <div class="dot dot-red"></div>
+          <div class="dot dot-yellow"></div>
+          <div class="dot dot-green"></div>
+        </div>
+      </div>
+      <div class="console" id="console">
+        <div class="log-line log-sys">
+          <span class="log-time">00:00:00</span>
+          <span class="log-prefix">[SYS]</span>
+          <span class="log-msg">GovFlow AI v2.4.1 inicializado — aguardando pipeline...</span>
+        </div>
+        <div class="log-line log-info">
+          <span class="log-time">00:00:01</span>
+          <span class="log-prefix">[INF]</span>
+          <span class="log-msg">Modelos de IA carregados: OCR v3, NER-Gov, Classifier</span>
+        </div>
+        <div class="log-line log-sys">
+          <span class="log-time">00:00:01</span>
+          <span class="log-prefix">[RPA]</span>
+          <span class="log-msg">Robô em standby — aguardando instruções...</span>
+        </div>
+        <span class="cursor-blink"></span>
+      </div>
+    </div>
+
+    <!-- Extracted Data Card -->
+    <div class="card">
+      <div class="card-header">
+        <span class="section-label">
+          <i data-lucide="database"></i>
+          Dados Extraídos — Pré-Envio
+        </span>
+        <span class="section-label" id="confidence-badge" style="display:none">
+          <i data-lucide="shield-check"></i>
+          Confiança IA
+        </span>
+      </div>
+      <div class="data-card-body" id="data-body">
+        <div class="data-empty" id="data-empty">
+          <div class="data-empty-icon">
+            <i data-lucide="sparkles"></i>
+          </div>
+          <p>Os dados extraídos aparecerão aqui</p>
+          <span>após o processamento via IA</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SUBMIT FOOTER -->
+  <div class="submit-footer">
+    <div class="footer-info">
+      <span class="footer-title">Pronto para enviar ao portal Gov.br?</span>
+      <span class="footer-sub">Verifique os dados extraídos antes de confirmar o envio via RPA</span>
+    </div>
+    <div class="footer-actions">
+      <button class="btn-outline" onclick="resetAll()">
+        <i data-lucide="rotate-ccw"></i>
+        Reiniciar
+      </button>
+      <button class="btn-primary" id="submit-btn" disabled onclick="submitToGov()">
+        <i data-lucide="send"></i>
+        Enviar ao Gov.br
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // ── INIT LUCIDE ──
+  lucide.createIcons();
+
+  // ── DATETIME ──
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('datetime-label').textContent =
+      now.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
+      + ' · ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 60000);
+
+  // ── STATE ──
+  let files = [];
+  let currentStep = 0;
+  let processing = false;
+  let startTime = null;
+
+  // ── DRAG & DROP ──
+  function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').classList.add('dragover');
+  }
+
+  function handleDragLeave(e) {
+    document.getElementById('dropzone').classList.remove('dragover');
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').classList.remove('dragover');
+    const droppedFiles = Array.from(e.dataTransfer.files).filter(f =>
+      /\.(pdf|png|jpg|jpeg)$/i.test(f.name)
+    );
+    if (droppedFiles.length) addFiles(droppedFiles);
+    else showToast('Formato inválido. Use PDF ou PNG.', 'error');
+  }
+
+  function handleFileSelect(e) {
+    const selected = Array.from(e.target.files);
+    if (selected.length) addFiles(selected);
+    e.target.value = '';
+  }
+
+  function addFiles(newFiles) {
+    newFiles.forEach(f => {
+      if (!files.find(x => x.name === f.name)) {
+        files.push(f);
+      }
+    });
+    renderFileList();
+    showToast(`${newFiles.length} arquivo(s) adicionado(s)`, 'success');
+  }
+
+  function renderFileList() {
+    const list = document.getElementById('file-list');
+    const empty = document.getElementById('empty-state');
+    const countEl = document.getElementById('file-count');
+    const btn = document.getElementById('process-btn');
+
+    countEl.textContent = files.length + ' arquivo(s)';
+
+    if (files.length === 0) {
+      list.innerHTML = '';
+      list.appendChild(empty);
+      btn.disabled = true;
+      return;
+    }
+
+    list.innerHTML = '';
+    files.forEach((f, idx) => {
+      const ext = f.name.split('.').pop().toUpperCase();
+      const icon = ext === 'PDF' ? 'file-text' : 'image';
+      const size = (f.size / 1024).toFixed(0) + ' KB';
+      const el = document.createElement('div');
+      el.className = 'file-item';
+      el.innerHTML = `
+        <div class="file-thumb"><i data-lucide="${icon}"></i></div>
+        <div class="file-info">
+          <div class="file-name">${f.name}</div>
+          <div class="file-meta">${ext} · ${size}</div>
+        </div>
+        <button class="file-remove" onclick="removeFile(${idx})" title="Remover">
+          <i data-lucide="x"></i>
+        </button>
+      `;
+      list.appendChild(el);
+    });
+    lucide.createIcons();
+    btn.disabled = processing;
+  }
+
+  function removeFile(idx) {
+    files.splice(idx, 1);
+    renderFileList();
+  }
+
+  // ── STEPPER ──
+  function setStep(n) {
+    currentStep = n;
+    const steps = document.querySelectorAll('.step');
+    const conns = document.querySelectorAll('.step-connector-fill');
+    const pcts = [0, 28, 62, 100];
+    const descs = [
+      'Aguardando upload de documento...',
+      '🤖 IA extraindo dados do documento...',
+      '⚙️ Robô RPA preenchendo o portal...',
+      '✅ Processo concluído com sucesso!'
+    ];
+
+    steps.forEach((s, i) => {
+      s.classList.remove('active', 'done');
+      if (i < n) s.classList.add('done');
+      if (i === n) s.classList.add('active');
+    });
+
+    conns.forEach((c, i) => {
+      c.style.width = i < n ? '100%' : '0%';
+    });
+
+    document.getElementById('overall-fill').style.width = pcts[n] + '%';
+    document.getElementById('pct-label').textContent = pcts[n] + '%';
+    document.getElementById('step-desc').innerHTML =
+      `<i data-lucide="circle-dot" style="width:12px;height:12px"></i>${descs[n]}`;
+    lucide.createIcons();
+  }
+
+  // ── CONSOLE ──
+  function getTimestamp() {
+    const now = new Date();
+    const elapsed = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+    const h = String(Math.floor(elapsed / 3600)).padStart(2,'0');
+    const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2,'0');
+    const s = String(elapsed % 60).padStart(2,'0');
+    return `${h}:${m}:${s}`;
+  }
+
+  function log(msg, type = 'info') {
+    const con = document.getElementById('console');
+    const cursor = con.querySelector('.cursor-blink');
+    if (cursor) cursor.remove();
+
+    const line = document.createElement('div');
+    line.className = `log-line log-${type}`;
+
+    const prefixMap = { info: '[INF]', warn: '[WRN]', error: '[ERR]', sys: '[SYS]', rpa: '[RPA]' };
+    line.innerHTML = `
+      <span class="log-time">${getTimestamp()}</span>
+      <span class="log-prefix">${prefixMap[type] || '[INF]'}</span>
+      <span class="log-msg">${msg}</span>
+    `;
+    con.appendChild(line);
+
+    const newCursor = document.createElement('span');
+    newCursor.className = 'cursor-blink';
+    con.appendChild(newCursor);
+    con.scrollTop = con.scrollHeight;
+  }
+
+  // ── EXTRACTED DATA ──
+  const mockData = [
+    { key: 'Nome Completo', val: 'Ana Paula Gomes Silva', icon: 'user', highlight: true },
+    { key: 'CPF', val: '***.***.234-87', icon: 'fingerprint' },
+    { key: 'Data de Nascimento', val: '14/03/1988', icon: 'calendar' },
+    { key: 'Tipo de Documento', val: 'CNH — Categoria B', icon: 'id-card' },
+    { key: 'Número do Doc.', val: '00482910-2 SP', icon: 'hash' },
+    { key: 'Validade', val: '14/03/2028', icon: 'clock' },
+    { key: 'Órgão Emissor', val: 'DETRAN-SP', icon: 'building-2' },
+    { key: 'Confiança da Extração', val: '97.3%', icon: 'shield-check', isConf: true },
+  ];
+
+  function renderData() {
+    const body = document.getElementById('data-body');
+    const badge = document.getElementById('confidence-badge');
+    body.innerHTML = '';
+    badge.style.display = 'flex';
+
+    mockData.forEach((d, i) => {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'data-field';
+        if (d.isConf) {
+          el.innerHTML = `
+            <span class="data-key"><i data-lucide="${d.icon}" style="width:11px;height:11px"></i>${d.key}</span>
+            <span class="data-val confidence-label">${d.val}</span>
+            <div class="confidence-bar"><div class="confidence-fill" id="conf-bar"></div></div>
+          `;
+          body.appendChild(el);
+          lucide.createIcons();
+          setTimeout(() => {
+            document.getElementById('conf-bar').style.width = '97.3%';
+          }, 100);
+        } else {
+          el.innerHTML = `
+            <span class="data-key"><i data-lucide="${d.icon}" style="width:11px;height:11px"></i>${d.key}</span>
+            <span class="data-val ${d.highlight ? 'highlight' : ''}">${d.val}</span>
+          `;
+          body.appendChild(el);
+          lucide.createIcons();
+        }
+      }, i * 140);
+    });
+  }
+
+  // ── PROCESSING PIPELINE ──
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function startProcessing() {
+    if (processing || files.length === 0) return;
+    processing = true;
+    startTime = Date.now();
+    document.getElementById('process-btn').disabled = true;
+    document.getElementById('submit-btn').disabled = true;
+
+    // ── STEP 1: UPLOAD ──
+    setStep(0);
+    log(`Pipeline iniciado — ${files.length} documento(s) na fila`, 'sys');
+    await sleep(600);
+    log(`Enviando "${files[0].name}" para o servidor seguro...`, 'info');
+    await sleep(800);
+    log('Arquivo recebido — checksum SHA-256 verificado ✓', 'info');
+    await sleep(500);
+
+    // ── STEP 2: IA EXTRACTION ──
+    setStep(1);
+    log('Iniciando pipeline de OCR com modelo Gov-NER v3...', 'sys');
+    await sleep(700);
+    log('Detectando tipo de documento: CNH Categoria B', 'info');
+    await sleep(600);
+    log('Extraindo campos: Nome, CPF, Validade, Emissor...', 'info');
+    await sleep(900);
+    log('Aplicando NLP — normalização de entidades gov...', 'info');
+    await sleep(700);
+    log('Validando CPF mascarado contra base SERPRO...', 'info');
+    await sleep(600);
+    log('Extração concluída — confiança: 97.3% ✓', 'sys');
+    renderData();
+    await sleep(400);
+
+    // ── STEP 3: RPA ──
+    setStep(2);
+    log('Robô RPA inicializado — abrindo portal Gov.br...', 'rpa');
+    // Preparamos os dados que o seu robô espera (registroEmpresa.js)
+    const dadosParaObroro = {
+        cnpj: "12.345.678/0001-90",
+        razaoSocial: "TECHGOV SOLUCOES LTDA",
+        capitalSocial: "50000",
+        socios: [
+            { nome: "Pedro Lopes", participacao: "60%" },
+            { nome: "Ana Silva", participacao: "40%" }
+        ]
+    };
+
+    try {
+        // Chamada real para o seu servidor Node.js
+        const response = await fetch('http://localhost:3000/registro-empresa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosParaObroro)
+        });
+
+        const data = await response.json();
+
+        if (data.resultado.success) {
+            log('Robô finalizou o preenchimento no portal ✓', 'rpa');
+            log('Formulário submetido com sucesso via Puppeteer ✓', 'rpa');
+        } else {
+            log('Erro no robô: ' + data.resultado.error, 'warn');
+            processing = false;
+            return; // Para o pipeline se der erro
+        }
+    } catch (error) {
+        log('Falha ao conectar com o servidor RPA. Verifique se o server.js está rodando.', 'warn');
+        processing = false;
+        return;
+    }
+    await sleep(800);
+    log('Navegando para: gov.br/meu-inss/formularios/...', 'rpa');
+    await sleep(700);
+    log('Robô iniciou preenchimento no portal...', 'rpa');
+    await sleep(600);
+    log('Campo "Nome Completo" preenchido com sucesso ✓', 'rpa');
+    await sleep(400);
+    log('Campo "CPF" preenchido com sucesso ✓', 'rpa');
+    await sleep(400);
+    log('Campo "Data de Nascimento" preenchido com sucesso ✓', 'rpa');
+    await sleep(500);
+    log('Documento anexado ao formulário ✓', 'rpa');
+    await sleep(600);
+    log('Aguardando validação CAPTCHA (token automático)...', 'warn');
+    await sleep(900);
+    log('CAPTCHA resolvido via serviço externo ✓', 'rpa');
+    await sleep(500);
+    log('Formulário submetido — aguardando protocolo...', 'rpa');
+    await sleep(800);
+
+    // ── STEP 4: DONE ──
+    setStep(3);
+    log('Protocolo recebido: NB-2024-00487253 ✓', 'sys');
+    await sleep(300);
+    log('Comprovante gerado e arquivado no sistema', 'sys');
+    await sleep(200);
+    log('━━━ Pipeline finalizado com sucesso! ━━━', 'sys');
+
+    processing = false;
+    document.getElementById('submit-btn').disabled = false;
+    showToast('Processamento concluído com sucesso!', 'success');
+  }
+
+  // ── SUBMIT ──
+  function submitToGov() {
+    if (currentStep !== 3) return;
+    showToast('Enviando ao Gov.br via protocolo seguro...', 'info');
+    log('Iniciando envio final via API Gov.br...', 'sys');
+    setTimeout(() => {
+      log('Dados transmitidos — protocolo NB-2024-00487253 ✓', 'sys');
+      showToast('Enviado com sucesso! Protocolo: NB-2024-00487253', 'success');
+    }, 2000);
+  }
+
+  // ── RESET ──
+  function resetAll() {
+    files = [];
+    processing = false;
+    startTime = null;
+    renderFileList();
+    setStep(0);
+
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('process-btn').disabled = true;
+    document.getElementById('confidence-badge').style.display = 'none';
+    document.getElementById('data-body').innerHTML = `
+      <div class="data-empty" id="data-empty">
+        <div class="data-empty-icon"><i data-lucide="sparkles"></i></div>
+        <p>Os dados extraídos aparecerão aqui</p>
+        <span>após o processamento via IA</span>
+      </div>`;
+    lucide.createIcons();
+
+    const con = document.getElementById('console');
+    con.innerHTML = `
+      <div class="log-line log-sys">
+        <span class="log-time">00:00:00</span>
+        <span class="log-prefix">[SYS]</span>
+        <span class="log-msg">GovFlow AI v2.4.1 — sessão reiniciada.</span>
+      </div>
+      <span class="cursor-blink"></span>
+    `;
+    showToast('Interface reiniciada', 'info');
+  }
+
+  // ── TOAST ──
+  function showToast(msg, type = 'info') {
+    const icons = { success: 'check-circle', error: 'alert-circle', info: 'info' };
+    const container = document.getElementById('toasts');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<i data-lucide="${icons[type]}" style="width:16px;height:16px"></i><span>${msg}</span>`;
+    container.appendChild(t);
+    lucide.createIcons();
+    setTimeout(() => {
+      t.style.animation = 'none';
+      t.style.opacity = '0';
+      t.style.transform = 'translateX(40px)';
+      t.style.transition = 'all 0.3s ease';
+      setTimeout(() => t.remove(), 300);
+    }, 3500);
+  }
+
+  // ── INITIAL ICONS ──
+  lucide.createIcons();
+
+  // ── SSO (spec 02) — identifica o escritório logado e permite sair ──
+  async function carregarSessao() {
+    const res = await fetch('/portal/whoami');
+    if (res.status === 401) {
+      window.location.reload(); // sessão caiu — força novo login via SSO
+      return;
+    }
+    const dados = await res.json();
+    document.getElementById('escritorio-label').textContent = dados.nome_escritorio || '';
+    const iniciais = (dados.nome_escritorio || 'GA')
+      .split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+    document.getElementById('header-user').textContent = iniciais || 'GA';
+  }
+
+  document.getElementById('header-user').addEventListener('click', async () => {
+    if (!confirm('Deseja sair da sua sessão GovFlow AI?')) return;
+    await fetch('/portal/logout', { method: 'POST' });
+    window.location.reload();
+  });
+
+  carregarSessao();
+</script>
+</body>
+</html>

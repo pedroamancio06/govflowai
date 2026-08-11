@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Portal do Governo - Registro</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #e9ecef; }
+        .form-box { background: white; padding: 20px; border: 1px solid #ccc; max-width: 500px; }
+        input { display: block; width: 90%; margin-bottom: 10px; padding: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Sistema de Registro Mercantil</h1>
+    <div class="form-box" id="form-registro">
+        <input type="text" id="username" placeholder="Login">
+        <input type="password" id="password" placeholder="Senha">
+        <button id="login-button">Entrar</button>
+        <hr>
+        <div id="menu-registro-empresa" style="cursor:pointer; color: blue;">[ Menu: Novo Registro ]</div>
+        <hr>
+        <input type="text" id="cnpj" placeholder="CNPJ">
+        <input type="text" id="razaoSocial" placeholder="Razão Social">
+        <input type="text" id="capitalSocial" placeholder="Capital">
+        <div id="socios-list"></div>
+        <button id="add-socio">Adicionar Sócio</button>
+        <button id="submit-registro">Enviar Registro</button>
+    </div>
+
+    <script>
+        // Mock mínimo para o robô Puppeteer (robot/registroEmpresa.js) ter algo real
+        // para interagir: login precisa navegar de fato, e "Adicionar Sócio" precisa
+        // criar as linhas .socio-row que o robô procura.
+        document.getElementById('login-button').addEventListener('click', () => {
+            window.location.href = window.location.pathname + '?logado=1';
+        });
+
+        document.getElementById('add-socio').addEventListener('click', () => {
+            const row = document.createElement('div');
+            row.className = 'socio-row';
+            row.innerHTML = '<input class="nome" type="text" placeholder="Nome do sócio">' +
+                             '<input class="participacao" type="text" placeholder="Participação">';
+            document.getElementById('socios-list').appendChild(row);
+        });
+
+        document.getElementById('submit-registro').addEventListener('click', () => {
+            document.getElementById('submit-registro').textContent = 'Registro Enviado ✓';
+        });
+    </script>
+</body>
+</html>

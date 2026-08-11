@@ -1,0 +1,30 @@
+# Documentação — GovFlow AI
+
+Documentação de produto para alinhar o projeto ao **Enterprise Challenge Claro** e à **banca final do Startup One (FIAP)**.
+
+- [**PRD — Visão Geral do Produto**](PRD.md): contexto, objetivos, personas, arquitetura em 3 camadas, fases e riscos.
+
+## Specs por Camada
+
+### Camada 1 — Hub de Convergência
+| Spec | Status |
+|---|---|
+| [01 — Interface Conversacional (Chatbot/Webchat/WhatsApp)](specs/01-interface-conversacional.md) | **MVP implementado** — webchat em `/webchat.html` (`hub/`), sem WhatsApp real ainda |
+| [02 — Portal Web / SSO](specs/02-portal-web-sso.md) | **MVP implementado** — `/page.html` protegido por SSO simulado (`auth/`), IdP Claro real ainda pendente |
+| [03 — Webhooks e APIs de Conexão](specs/03-webhooks-api.md) | Parcial — MVP da spec 01 usa uma versão simplificada em memória (`hub/eventBus.js`) como stand-in; fila real/Redis ainda não existe |
+
+### Camada 2 — Aplicação (Backend / Core)
+| Spec | Status |
+|---|---|
+| [04 — Motor de OCR e NLP](specs/04-motor-ocr-nlp.md) | Não implementado |
+| [05 — Motor de Automação RPA](specs/05-motor-rpa.md) | PoC funcional contra portal fake — `portal_fake.html` ganhou JS mínimo (login navega, sócios geram linhas) para o robô conseguir completar o fluxo |
+| [06 — Banco de Dados Relacional & Data Warehouse](specs/06-banco-dados-dw.md) | Não implementado |
+
+### Camada 3 — Painel de Gestão / Dashboard
+| Spec | Status |
+|---|---|
+| [07 — Painel de Acompanhamento (Status Board)](specs/07-painel-status-board.md) | Mock visual existente, sem dados reais |
+| [08 — Gráficos Analíticos de ROI](specs/08-graficos-roi.md) | Não implementado |
+| [09 — Gestão de Assinatura SaaS (Freemium)](specs/09-gestao-saas-freemium.md) | Não implementado |
+
+Cada spec segue o mesmo formato: Objetivo → Estado Atual/Gap (referenciando o código real do repositório) → Requisitos Funcionais → Requisitos Não Funcionais → Contrato de API/Dados → Critérios de Aceite → Dependências → Fora de Escopo.
