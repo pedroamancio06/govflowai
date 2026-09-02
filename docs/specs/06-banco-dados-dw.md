@@ -13,7 +13,7 @@ Testado ponta a ponta: login SSO resolvendo `DIM_CLIENTE` real e uma automação
 
 **Simplificação consciente:** o canal de chat (webchat) ainda não tem login — `hub/pipeline.js` resolve/provisiona um `DIM_CLIENTE` sintético a partir do `usuarioId` da sessão de chat. Quando o WhatsApp real existir, o telefone assume esse mesmo papel.
 
-**Pendente para produção:** trocar PGlite por AWS RDS real é isolado em `db/connection.js` — a camada de repositórios já fala SQL parametrizado padrão.
+**Banco de dados em nuvem provisionado (Neon, `sa-east-1`)** — `db/connection.js` suporta os dois modos por trás da mesma interface: com `DATABASE_URL` definida, conecta no Neon via `pg`; sem ela, cai automaticamente no PGlite local. Fluxo completo (SSO, upload, OCR, confirmação, RPA) validado ponta a ponta contra o banco em nuvem.
 
 ## 1. Objetivo
 

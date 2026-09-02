@@ -15,3 +15,7 @@ ocr-service/tessdata/*.traineddata
 # Saídas geradas pelos scripts de teste (fonte .html/.js fica versionado)
 ocr-service/test-fixtures/*.pdf
 ocr-service/test-fixtures/*.png
+
+# Arquivos de lock temporários do Word/PowerPoint
+~$*.docx
+~$*.pptx

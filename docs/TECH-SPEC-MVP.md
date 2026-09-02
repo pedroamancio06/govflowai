@@ -68,7 +68,7 @@
 | Fila assíncrona | `EventEmitter` em memória (1 processo) | Fila real (Redis/BullMQ ou SQS) | Necessário antes de horizontalizar o backend (mais de 1 instância Node) |
 | OCR/NLP | **Implementado** — microserviço Python real (`ocr-service/`, Tesseract + OpenCV + Regex + FastAPI), consumido por `hub/pipeline.js` via HTTP | Microserviço Python (Tesseract + Regex), FastAPI | Consumo hoje é HTTP direto, não fila (spec 03 ainda pendente) — funciona para 1 instância, migra quando o volume justificar |
 | RPA | Puppeteer (Node.js) funcional contra portal de testes | Puppeteer (Node.js) — **mantido**, ver justificativa em §2.2.3 | Adicionar tratamento de exceções granular e retries (§2.2.3) |
-| Banco de dados | **Implementado** — PostgreSQL real via PGlite (WASM, embutido, `db/`), Star Schema completo, sem dependência de Docker/instalação local | PostgreSQL / AWS RDS, Star Schema | Trocar `db/connection.js` para apontar a um Postgres/RDS real é a única mudança necessária — a camada de repositórios (`db/repositories/`) já usa a interface `query(sql, params)` padrão |
+| Banco de dados | **Implementado em nuvem** — PostgreSQL real no Neon (`sa-east-1`), Star Schema completo. `db/connection.js` suporta os dois modos por trás da mesma interface: `DATABASE_URL` definida usa o Neon (via `pg`); vazia, cai automaticamente no PGlite local (WASM, sem Docker) para desenvolvimento offline | PostgreSQL / AWS RDS ou Neon, Star Schema | Concluído — troca de provedor (Neon → RDS, por exemplo) é apenas mudar `DATABASE_URL` |
 | Dashboard analítico | Mock visual com dados fixos | React consumindo `/api/v1/dashboard/*` real | Depende do banco de dados existir primeiro |
 
 ### 1.4 Diagrama de Fluxo de Dados (Data Flow)
@@ -653,7 +653,7 @@ Endpoint operacional (liveness/readiness probe para orquestração/DevOps). `200
 
 Para o time de engenharia priorizar o restante do MVP a partir do estado atual (§1.3):
 
-1. ✅ **Sprint 1 — Fundação de dados** *(concluída)*: Star Schema aplicado (`db/schema.sql`), camada de repositórios (`db/repositories/`) substituindo o estado em memória — `auth/tenantStore.js` e `hub/pipeline.js` já gravam em `DIM_CLIENTE`/`FATO_PROCESSAMENTO_AUTOMACOES` reais. Rodando local via PGlite; provisionar AWS RDS fica para quando houver ambiente de piloto, é troca de 1 módulo (§3)
+1. ✅ **Sprint 1 — Fundação de dados** *(concluída)*: Star Schema aplicado (`db/schema.sql`), camada de repositórios (`db/repositories/`) substituindo o estado em memória — `auth/tenantStore.js` e `hub/pipeline.js` já gravam em `DIM_CLIENTE`/`FATO_PROCESSAMENTO_AUTOMACOES` reais. **Banco de dados em nuvem provisionado (Neon)** e validado ponta a ponta; PGlite local permanece como fallback automático para desenvolvimento offline (§3)
 2. ✅ **Sprint 2 — Microserviço de OCR** *(concluída)*: serviço Python/FastAPI real (`ocr-service/`) substituindo o stub — pipeline completo (pré-processamento, Tesseract, regex, confiança por campo). Integração com o backend é HTTP direto por ora; migrar para fila real fica para quando a spec 03 existir
 3. **Sprint 3 — Migração de auth para JWT:** adaptar o middleware de sessão existente (cookie → JWT), sem alterar a lógica de resolução de tenant já validada
 4. **Sprint 4 — API v1 completa:** implementar/realinhar os endpoints da Seção 4 sob o namespace `/api/v1`, com testes automatizados por endpoint
