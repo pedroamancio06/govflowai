@@ -31,7 +31,7 @@ router.post("/idp/login", express.urlencoded({ extended: false }), (req, res) =>
 });
 
 // ── Callback do GovFlow AI (RF01 + RF03) ────────────────────────────
-router.get("/portal/callback", (req, res) => {
+router.get("/portal/callback", async (req, res) => {
   const { code, state } = req.query;
   const cookies = parseCookies(req);
 
@@ -44,7 +44,7 @@ router.get("/portal/callback", (req, res) => {
     return res.status(400).send("Código de autenticação inválido ou expirado. Tente entrar novamente em /page.html.");
   }
 
-  const cliente = tenantStore.resolverOuProvisionar(claims);
+  const cliente = await tenantStore.resolverOuProvisionar(claims);
   const token = sessions.criar(cliente.id_cliente, claims);
 
   clearCookie(res, COOKIE_STATE);
@@ -61,8 +61,8 @@ router.post("/portal/logout", (req, res) => {
 });
 
 // Exemplo de API protegida (RF05) — o padrão a seguir nas specs 07/08/09.
-router.get("/portal/whoami", requireSessaoApi, (req, res) => {
-  const cliente = tenantStore.buscarPorId(req.clienteId);
+router.get("/portal/whoami", requireSessaoApi, async (req, res) => {
+  const cliente = await tenantStore.buscarPorId(req.clienteId);
   res.json({
     id_cliente: req.clienteId,
     nome_escritorio: cliente ? cliente.nome_escritorio : null,

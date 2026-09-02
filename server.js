@@ -7,6 +7,8 @@ const Logger = require("./services/logger");
 const hubRouter = require("./hub/router");
 const authRouter = require("./auth/router");
 const { requireSessaoPagina } = require("./auth/middleware");
+const { migrar } = require("./db/migrate");
+const { seed } = require("./db/seed");
 
 const app = express();
 
@@ -44,6 +46,28 @@ app.post("/registro-empresa", async (req, res) => {
   });
 });
 
-app.listen(3000, () => {
+async function iniciar() {
+  // Confirma a porta livre ANTES de tocar no banco — o PGlite não suporta
+  // dois processos apontando pro mesmo diretório de dados ao mesmo tempo
+  // (single-writer, como SQLite); uma segunda instância migrando/gravando
+  // em paralelo corrompe o diretório local (já aconteceu durante o desenvolvimento).
+  const servidor = app.listen(3000);
+  await new Promise((resolve, reject) => {
+    servidor.once("listening", resolve);
+    servidor.once("error", reject);
+  });
+
+  await migrar();
+  await seed();
+
   console.log("Servidor GovFlow rodando em http://localhost:3000");
+}
+
+iniciar().catch((erro) => {
+  if (erro.code === "EADDRINUSE") {
+    console.error("Porta 3000 já está em uso — outra instância do servidor já está rodando. Pare-a antes de iniciar uma nova.");
+  } else {
+    console.error("Falha ao iniciar o servidor:", erro);
+  }
+  process.exit(1);
 });

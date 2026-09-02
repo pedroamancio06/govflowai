@@ -1,6 +1,17 @@
 node_modules/
 .env
+data/
 uploads/*
 !uploads/.gitkeep
 bash.exe.stackdump
 .claude/
+
+# Motor de OCR (ocr-service/) — ambiente Python
+ocr-service/venv/
+ocr-service/__pycache__/
+ocr-service/**/__pycache__/
+# Pacote de idioma do Tesseract (~15MB) — baixado via setup, não versionado
+ocr-service/tessdata/*.traineddata
+# Saídas geradas pelos scripts de teste (fonte .html/.js fica versionado)
+ocr-service/test-fixtures/*.pdf
+ocr-service/test-fixtures/*.png

@@ -1,7 +1,19 @@
 # Spec 06 — Banco de Dados Relacional & Analítico (Data Warehouse)
 
 **Camada:** 2 — Aplicação (Backend/Core)
-**Status:** Não implementado. Não existe nenhuma persistência hoje — o único registro de uma execução é o `console.log` do [Logger](../../services/logger.js), que se perde ao fim da requisição HTTP.
+**Status:** Implementado — ver nota abaixo. Especificação técnica completa (DDL, correções de design encontradas na implementação) em [TECH-SPEC-MVP.md §3](../TECH-SPEC-MVP.md#3-especificação-de-banco-de-dados-star-schema--aws-rds).
+
+## 0. Nota de Implementação
+
+Star Schema real aplicado em `db/schema.sql`, rodando via **PGlite** (Postgres real compilado para WASM, `db/connection.js`) — sem exigir Docker ou instalação local de Postgres. Camada de repositórios em `db/repositories/` (`clienteRepository`, `automacaoRepository`, `dimensaoRepository`) já é consumida por:
+- `auth/tenantStore.js` — `DIM_CLIENTE` real (era Map em memória)
+- `hub/pipeline.js` — grava o ciclo de vida completo de cada automação em `FATO_PROCESSAMENTO_AUTOMACOES`, incluindo `tempo_economizado_seg` (coluna gerada pelo próprio banco)
+
+Testado ponta a ponta: login SSO resolvendo `DIM_CLIENTE` real e uma automação completa via webchat persistindo corretamente na fato, com JOIN às 5 dimensões retornando os dados esperados.
+
+**Simplificação consciente:** o canal de chat (webchat) ainda não tem login — `hub/pipeline.js` resolve/provisiona um `DIM_CLIENTE` sintético a partir do `usuarioId` da sessão de chat. Quando o WhatsApp real existir, o telefone assume esse mesmo papel.
+
+**Pendente para produção:** trocar PGlite por AWS RDS real é isolado em `db/connection.js` — a camada de repositórios já fala SQL parametrizado padrão.
 
 ## 1. Objetivo
 

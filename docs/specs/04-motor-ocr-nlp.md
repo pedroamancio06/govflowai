@@ -1,7 +1,19 @@
 # Spec 04 — Motor de OCR e Tratamento de Strings via IA (NLP)
 
 **Camada:** 2 — Aplicação (Backend/Core)
-**Status:** Não implementado. Hoje os dados chegam ao robô já estruturados em JSON (`dadosParaObroro` hardcoded em [public/page.html:1284-1292](../../public/page.html)) — não existe leitura real de documento nenhuma.
+**Status:** Implementado — ver nota abaixo. Especificação técnica completa (pipeline, stack, contrato JSON) em [TECH-SPEC-MVP.md §2.2](../TECH-SPEC-MVP.md#22-módulo-2--motor-de-ocr--nlp-python).
+
+## 0. Nota de Implementação
+
+Microserviço Python real em `ocr-service/` (FastAPI + Tesseract + OpenCV + Regex), consumido por `hub/pipeline.js` via HTTP interno (`POST /extrair`) — substitui o `extrairDadosStub()` que existia antes. Setup e como rodar: [ocr-service/README.md](../../ocr-service/README.md).
+
+**Pipeline real, testado com documento gerado por Puppeteer** (`ocr-service/test-fixtures/`) simulando um Contrato Social: renderização de PDF/imagem → pré-processamento OpenCV → Tesseract (idioma português) → higienização regex → extração de campos (CNPJ com validação de dígito verificador, Razão Social, Capital Social, QSA, Endereço) → confiança agregada → decisão `pronto_para_rpa` / `pendente_revisao_humana` / `documento_ilegivel`.
+
+**Dois problemas reais encontrados e corrigidos durante o teste** (documentados em `ocr-service/preprocessamento.py` e `ocr-service/extracao.py`):
+1. **Deskew removido.** A correção de inclinação baseada em `cv2.minAreaRect` (prevista no pipeline original) se mostrou instável em página de texto corrido — destruía documentos mesmo sem nenhuma inclinação real. Substituída por grayscale + denoise + threshold de Otsu, validado como confiável.
+2. **Regex de Razão Social não considerava aspas tipográficas quebradas pelo OCR** — o Tesseract lia uma aspa de fechamento como dois caracteres (`'"`), quebrando o match. Corrigido para aceitar zero ou mais caracteres de aspas, não exatamente um.
+
+**Limitação honesta:** a extração de Razão Social/QSA/Endereço usa heurísticas de regex, não NER/ML — funciona bem contra o formato do documento de referência usado no teste, mas a acurácia real depende do formato dos documentos que chegarem no piloto. É exatamente para isso que existe a confiança por campo e o estado `pendente_revisao_humana` (RF10) — a incerteza é sinalizada, não escondida.
 
 ## 1. Objetivo
 

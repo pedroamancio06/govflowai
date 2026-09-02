@@ -1,7 +1,11 @@
 # Spec 07 — Painel de Acompanhamento (Status Board)
 
 **Camada:** 3 — Painel de Gestão / Dashboard
-**Status:** Existe uma versão puramente visual e mockada ([public/page.html](../../public/page.html)); precisa ser conectada a dados reais.
+**Status:** Parcial. O card de upload/processamento em [public/page.html](../../public/page.html) já dispara o pipeline real (OCR via `POST /hub/portal/arquivos`, autenticado) e exibe os dados extraídos de verdade em "Dados Extraídos — Pré-Envio", em vez do mock anterior.
+
+**Fluxo em duas etapas, não mais automático de ponta a ponta:** o upload roda o OCR e PARA — o robô só é acionado quando o usuário clica em "Enviar ao Gov.br" (`POST /hub/portal/enviar`), nunca sozinho. A automação fica com status `aguardando_confirmacao` na tabela fato nesse meio-tempo, guardada em `hub/automacoesPendentes.js` (memória, efêmero) até a confirmação — com checagem de que só o próprio escritório autenticado pode confirmar a sua automação. `tempo_processamento_total_seg` é calculado como OCR + RPA apenas, nunca incluindo o tempo em que ficou esperando o clique do usuário (senão a métrica de ROI ficaria distorcida).
+
+**Ainda falta** a lista histórica de automações (RF01-RF06 desta spec) — hoje só existe a automação "em andamento" da sessão atual, sem persistir/listar execuções passadas na tela.
 
 ## 1. Objetivo
 

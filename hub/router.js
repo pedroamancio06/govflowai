@@ -5,8 +5,9 @@ const fs = require("fs");
 
 const { getSession, resetSession } = require("./sessionStore");
 const { handleTexto, mensagensMenu } = require("./flowEngine");
-const { iniciarPipeline } = require("./pipeline");
+const { iniciarPipeline, confirmarEnvio } = require("./pipeline");
 const eventBus = require("./eventBus");
+const { requireSessaoApi } = require("../auth/middleware");
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ const upload = multer({
   storage: multer.diskStorage({
     destination: UPLOAD_DIR,
     filename: (req, file, cb) => {
-      const usuarioId = String(req.body.usuario_id || "anonimo").replace(/[^a-zA-Z0-9_-]/g, "_");
+      const usuarioId = String(req.body.usuario_id || req.clienteId || "anonimo").replace(/[^a-zA-Z0-9_-]/g, "_");
       cb(null, `${usuarioId}_${Date.now()}${path.extname(file.originalname)}`);
     },
   }),
@@ -88,6 +89,52 @@ router.post("/arquivos", (req, res) => {
       id_processamento: idProcessamento,
     });
   });
+});
+
+// Canal Portal Web (autenticado via SSO, spec 02) — dashboard em /page.html.
+// Sem menu/estado de conversa: o serviço é sempre "abertura_redesim" (único
+// implementado no MVP), então o upload já dispara o pipeline diretamente.
+router.post("/portal/arquivos", requireSessaoApi, (req, res) => {
+  upload.single("arquivo")(req, res, async (err) => {
+    if (err) {
+      const motivo =
+        err.message === "TIPO_INVALIDO"
+          ? "Não consegui ler esse arquivo. Envie um PDF, JPG ou PNG."
+          : "Arquivo muito grande. O limite é 15MB.";
+      return res.status(400).json({ erro: motivo });
+    }
+    if (!req.file) {
+      return res.status(400).json({ erro: "Nenhum arquivo recebido." });
+    }
+
+    const usuarioId = `portal-${req.clienteId}`;
+    const sessaoPortal = { usuarioId, estado: "processando", servico: "abertura_redesim", idProcessamento: null };
+
+    const idProcessamento = await iniciarPipeline({
+      session: sessaoPortal,
+      arquivo: req.file,
+      idClienteConhecido: req.clienteId,
+      canal: "portal_web",
+      aguardarConfirmacao: true, // RPA só roda quando o usuário clicar "Enviar ao Gov.br"
+    });
+
+    res.status(202).json({ id_processamento: idProcessamento, usuario_id: usuarioId });
+  });
+});
+
+// Confirmação explícita do usuário — só agora o robô é acionado de verdade
+// contra o portal do governo. Nunca dispara sozinho a partir do upload.
+// (express.json() já é aplicado globalmente em server.js — não repetir aqui)
+router.post("/portal/enviar", requireSessaoApi, async (req, res) => {
+  const { id_processamento: idProcessamento } = req.body || {};
+  if (!idProcessamento) return res.status(400).json({ erro: "id_processamento é obrigatório" });
+
+  try {
+    await confirmarEnvio(idProcessamento, req.clienteId);
+    res.status(202).json({ ok: true });
+  } catch (error) {
+    res.status(404).json({ erro: error.message });
+  }
 });
 
 // RF07-RF10: feedback proativo em tempo real via Server-Sent Events

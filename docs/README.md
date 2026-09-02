@@ -3,6 +3,7 @@
 Documentação de produto para alinhar o projeto ao **Enterprise Challenge Claro** e à **banca final do Startup One (FIAP)**.
 
 - [**PRD — Visão Geral do Produto**](PRD.md): contexto, objetivos, personas, arquitetura em 3 camadas, fases e riscos.
+- [**Tech Spec MVP**](TECH-SPEC-MVP.md): especificação técnica de engenharia — DDL do Star Schema, contratos de API (`/api/v1`), especificação dos 4 módulos (Hub React, OCR Python, RPA, Dashboard), critérios de aceite mensuráveis e plano de sprints. Documento de referência para desenvolvedores full-stack e engenheiros de IA/DevOps.
 
 ## Specs por Camada
 
@@ -16,9 +17,9 @@ Documentação de produto para alinhar o projeto ao **Enterprise Challenge Claro
 ### Camada 2 — Aplicação (Backend / Core)
 | Spec | Status |
 |---|---|
-| [04 — Motor de OCR e NLP](specs/04-motor-ocr-nlp.md) | Não implementado |
+| [04 — Motor de OCR e NLP](specs/04-motor-ocr-nlp.md) | **Implementado** — microserviço Python/FastAPI real (`ocr-service/`, Tesseract + OpenCV + Regex), consumido por `hub/pipeline.js`. Extração heurística por regex, validada contra documento de referência — ver limitações em [ocr-service/README.md](../ocr-service/README.md) |
 | [05 — Motor de Automação RPA](specs/05-motor-rpa.md) | PoC funcional contra portal fake — `portal_fake.html` ganhou JS mínimo (login navega, sócios geram linhas) para o robô conseguir completar o fluxo |
-| [06 — Banco de Dados Relacional & Data Warehouse](specs/06-banco-dados-dw.md) | Não implementado |
+| [06 — Banco de Dados Relacional & Data Warehouse](specs/06-banco-dados-dw.md) | **Implementado** — Star Schema real (`db/`) via PGlite (Postgres/WASM embutido, sem Docker); `auth/` e `hub/` já gravam nele. AWS RDS real fica para o piloto |
 
 ### Camada 3 — Painel de Gestão / Dashboard
 | Spec | Status |

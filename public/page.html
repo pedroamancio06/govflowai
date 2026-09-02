@@ -1057,6 +1057,9 @@
   let currentStep = 0;
   let processing = false;
   let startTime = null;
+  let idClienteAtual = null; // preenchido por carregarSessao() — ver SSO
+  let streamAtivo = null;
+  let idProcessamentoAtual = null;
 
   // ── DRAG & DROP ──
   function handleDragOver(e) {
@@ -1199,172 +1202,172 @@
     con.scrollTop = con.scrollHeight;
   }
 
-  // ── EXTRACTED DATA ──
-  const mockData = [
-    { key: 'Nome Completo', val: 'Ana Paula Gomes Silva', icon: 'user', highlight: true },
-    { key: 'CPF', val: '***.***.234-87', icon: 'fingerprint' },
-    { key: 'Data de Nascimento', val: '14/03/1988', icon: 'calendar' },
-    { key: 'Tipo de Documento', val: 'CNH — Categoria B', icon: 'id-card' },
-    { key: 'Número do Doc.', val: '00482910-2 SP', icon: 'hash' },
-    { key: 'Validade', val: '14/03/2028', icon: 'clock' },
-    { key: 'Órgão Emissor', val: 'DETRAN-SP', icon: 'building-2' },
-    { key: 'Confiança da Extração', val: '97.3%', icon: 'shield-check', isConf: true },
-  ];
-
-  function renderData() {
+  // ── EXTRACTED DATA (dados reais — vindos do evento ocr_concluido) ──
+  function renderData(dadosOcr, confiancaAgregada) {
     const body = document.getElementById('data-body');
     const badge = document.getElementById('confidence-badge');
     body.innerHTML = '';
     badge.style.display = 'flex';
 
-    mockData.forEach((d, i) => {
+    const campos = [];
+    if (dadosOcr.cnpj) campos.push({ key: 'CNPJ', val: dadosOcr.cnpj.valor, icon: 'fingerprint' });
+    if (dadosOcr.razao_social) campos.push({ key: 'Razão Social', val: dadosOcr.razao_social.valor, icon: 'building-2', highlight: true });
+    if (dadosOcr.capital_social) campos.push({ key: 'Capital Social', val: `R$ ${dadosOcr.capital_social.valor}`, icon: 'banknote' });
+    if (dadosOcr.endereco) {
+      const e = dadosOcr.endereco;
+      campos.push({ key: 'Endereço', val: `${e.logradouro}, ${e.bairro}, ${e.cidade} - ${e.uf}, ${e.cep}`, icon: 'map-pin' });
+    }
+    (dadosOcr.qsa || []).forEach((s, i) => {
+      campos.push({ key: `Sócio ${i + 1}`, val: `${s.nome} (${s.participacao})`, icon: 'user' });
+    });
+
+    campos.forEach((d, i) => {
       setTimeout(() => {
         const el = document.createElement('div');
         el.className = 'data-field';
-        if (d.isConf) {
-          el.innerHTML = `
-            <span class="data-key"><i data-lucide="${d.icon}" style="width:11px;height:11px"></i>${d.key}</span>
-            <span class="data-val confidence-label">${d.val}</span>
-            <div class="confidence-bar"><div class="confidence-fill" id="conf-bar"></div></div>
-          `;
-          body.appendChild(el);
-          lucide.createIcons();
-          setTimeout(() => {
-            document.getElementById('conf-bar').style.width = '97.3%';
-          }, 100);
-        } else {
-          el.innerHTML = `
-            <span class="data-key"><i data-lucide="${d.icon}" style="width:11px;height:11px"></i>${d.key}</span>
-            <span class="data-val ${d.highlight ? 'highlight' : ''}">${d.val}</span>
-          `;
-          body.appendChild(el);
-          lucide.createIcons();
-        }
+        el.innerHTML = `
+          <span class="data-key"><i data-lucide="${d.icon}" style="width:11px;height:11px"></i>${d.key}</span>
+          <span class="data-val ${d.highlight ? 'highlight' : ''}">${d.val}</span>
+        `;
+        body.appendChild(el);
+        lucide.createIcons();
       }, i * 140);
     });
+
+    setTimeout(() => {
+      const pct = ((confiancaAgregada || 0) * 100).toFixed(1);
+      const el = document.createElement('div');
+      el.className = 'data-field';
+      el.innerHTML = `
+        <span class="data-key"><i data-lucide="shield-check" style="width:11px;height:11px"></i>Confiança da Extração</span>
+        <span class="data-val confidence-label">${pct}%</span>
+        <div class="confidence-bar"><div class="confidence-fill" id="conf-bar"></div></div>
+      `;
+      body.appendChild(el);
+      lucide.createIcons();
+      setTimeout(() => { document.getElementById('conf-bar').style.width = pct + '%'; }, 100);
+    }, campos.length * 140);
   }
 
-  // ── PROCESSING PIPELINE ──
+  // ── PROCESSING PIPELINE (real — Hub + OCR + RPA, spec 01/04/05) ──
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+  function tipoDoLog(evento) {
+    if (evento.etapa === 'rpa_progresso') return 'rpa';
+    if (evento.tipo === 'erro') return 'error';
+    if (evento.tipo === 'sucesso') return 'sys';
+    return 'info';
+  }
+
   async function startProcessing() {
-    if (processing || files.length === 0) return;
+    if (processing || files.length === 0 || !idClienteAtual) return;
     processing = true;
     startTime = Date.now();
     document.getElementById('process-btn').disabled = true;
     document.getElementById('submit-btn').disabled = true;
-
-    // ── STEP 1: UPLOAD ──
     setStep(0);
-    log(`Pipeline iniciado — ${files.length} documento(s) na fila`, 'sys');
-    await sleep(600);
-    log(`Enviando "${files[0].name}" para o servidor seguro...`, 'info');
-    await sleep(800);
-    log('Arquivo recebido — checksum SHA-256 verificado ✓', 'info');
-    await sleep(500);
 
-    // ── STEP 2: IA EXTRACTION ──
-    setStep(1);
-    log('Iniciando pipeline de OCR com modelo Gov-NER v3...', 'sys');
-    await sleep(700);
-    log('Detectando tipo de documento: CNH Categoria B', 'info');
-    await sleep(600);
-    log('Extraindo campos: Nome, CPF, Validade, Emissor...', 'info');
-    await sleep(900);
-    log('Aplicando NLP — normalização de entidades gov...', 'info');
-    await sleep(700);
-    log('Validando CPF mascarado contra base SERPRO...', 'info');
-    await sleep(600);
-    log('Extração concluída — confiança: 97.3% ✓', 'sys');
-    renderData();
-    await sleep(400);
+    if (files.length > 1) {
+      log(`${files.length} arquivos na fila — processando apenas o primeiro ("${files[0].name}") nesta versão.`, 'warn');
+    }
 
-    // ── STEP 3: RPA ──
-    setStep(2);
-    log('Robô RPA inicializado — abrindo portal Gov.br...', 'rpa');
-    // Preparamos os dados que o seu robô espera (registroEmpresa.js)
-    const dadosParaObroro = {
-        cnpj: "12.345.678/0001-90",
-        razaoSocial: "TECHGOV SOLUCOES LTDA",
-        capitalSocial: "50000",
-        socios: [
-            { nome: "Pedro Lopes", participacao: "60%" },
-            { nome: "Ana Silva", participacao: "40%" }
-        ]
+    const usuarioId = `portal-${idClienteAtual}`;
+    streamAtivo = new EventSource(`/hub/eventos/${usuarioId}/stream`);
+
+    const conexaoPronta = new Promise((resolve) => { streamAtivo.onopen = resolve; });
+
+    streamAtivo.onmessage = (evento) => {
+      const dadosEvento = JSON.parse(evento.data);
+      log(dadosEvento.texto, tipoDoLog(dadosEvento));
+      idProcessamentoAtual = dadosEvento.idProcessamento || idProcessamentoAtual;
+
+      if (dadosEvento.etapa === 'ocr_iniciado') setStep(1);
+      if (dadosEvento.etapa === 'ocr_concluido' && dadosEvento.dadosExtraidos) {
+        renderData(dadosEvento.dadosExtraidos, dadosEvento.confiancaAgregada);
+      }
+
+      // OCR concluído com confiança suficiente: o robô NÃO dispara sozinho —
+      // fica esperando o clique em "Enviar ao Gov.br" (ação humana explícita).
+      if (dadosEvento.etapa === 'aguardando_confirmacao') {
+        document.getElementById('submit-btn').disabled = false;
+      }
+
+      if (dadosEvento.etapa === 'rpa_iniciado') {
+        setStep(2);
+        document.getElementById('submit-btn').disabled = true;
+      }
+
+      if (dadosEvento.etapa === 'concluido') {
+        setStep(3);
+        processing = false;
+        document.getElementById('process-btn').disabled = files.length === 0;
+        showToast('Processamento concluído com sucesso!', 'success');
+        streamAtivo.close();
+      } else if (dadosEvento.tipo === 'erro') {
+        processing = false;
+        document.getElementById('process-btn').disabled = false;
+        showToast('Falha no processamento — veja o console', 'error');
+        streamAtivo.close();
+      }
     };
 
+    await conexaoPronta; // garante a inscrição no stream antes de disparar o upload
+
+    log(`Enviando "${files[0].name}" para processamento...`, 'sys');
+    const form = new FormData();
+    form.append('arquivo', files[0]);
+
     try {
-        // Chamada real para o seu servidor Node.js
-        const response = await fetch('http://localhost:3000/registro-empresa', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dadosParaObroro)
-        });
-
-        const data = await response.json();
-
-        if (data.resultado.success) {
-            log('Robô finalizou o preenchimento no portal ✓', 'rpa');
-            log('Formulário submetido com sucesso via Puppeteer ✓', 'rpa');
-        } else {
-            log('Erro no robô: ' + data.resultado.error, 'warn');
-            processing = false;
-            return; // Para o pipeline se der erro
-        }
-    } catch (error) {
-        log('Falha ao conectar com o servidor RPA. Verifique se o server.js está rodando.', 'warn');
+      const resposta = await fetch('/hub/portal/arquivos', { method: 'POST', body: form });
+      if (!resposta.ok) {
+        const erro = await resposta.json().catch(() => ({}));
+        log(`Erro ao enviar arquivo: ${erro.erro || resposta.status}`, 'error');
         processing = false;
-        return;
+        document.getElementById('process-btn').disabled = false;
+        streamAtivo.close();
+      } else {
+        const dados = await resposta.json();
+        idProcessamentoAtual = dados.id_processamento;
+      }
+    } catch (error) {
+      log('Falha ao conectar com o servidor. Verifique se o server.js está rodando.', 'error');
+      processing = false;
+      document.getElementById('process-btn').disabled = false;
+      streamAtivo.close();
     }
-    await sleep(800);
-    log('Navegando para: gov.br/meu-inss/formularios/...', 'rpa');
-    await sleep(700);
-    log('Robô iniciou preenchimento no portal...', 'rpa');
-    await sleep(600);
-    log('Campo "Nome Completo" preenchido com sucesso ✓', 'rpa');
-    await sleep(400);
-    log('Campo "CPF" preenchido com sucesso ✓', 'rpa');
-    await sleep(400);
-    log('Campo "Data de Nascimento" preenchido com sucesso ✓', 'rpa');
-    await sleep(500);
-    log('Documento anexado ao formulário ✓', 'rpa');
-    await sleep(600);
-    log('Aguardando validação CAPTCHA (token automático)...', 'warn');
-    await sleep(900);
-    log('CAPTCHA resolvido via serviço externo ✓', 'rpa');
-    await sleep(500);
-    log('Formulário submetido — aguardando protocolo...', 'rpa');
-    await sleep(800);
-
-    // ── STEP 4: DONE ──
-    setStep(3);
-    log('Protocolo recebido: NB-2024-00487253 ✓', 'sys');
-    await sleep(300);
-    log('Comprovante gerado e arquivado no sistema', 'sys');
-    await sleep(200);
-    log('━━━ Pipeline finalizado com sucesso! ━━━', 'sys');
-
-    processing = false;
-    document.getElementById('submit-btn').disabled = false;
-    showToast('Processamento concluído com sucesso!', 'success');
   }
 
-  // ── SUBMIT ──
-  function submitToGov() {
-    if (currentStep !== 3) return;
-    showToast('Enviando ao Gov.br via protocolo seguro...', 'info');
-    log('Iniciando envio final via API Gov.br...', 'sys');
-    setTimeout(() => {
-      log('Dados transmitidos — protocolo NB-2024-00487253 ✓', 'sys');
-      showToast('Enviado com sucesso! Protocolo: NB-2024-00487253', 'success');
-    }, 2000);
+  // ── SUBMIT — aciona o robô de verdade contra o portal do governo ──
+  async function submitToGov() {
+    if (!idProcessamentoAtual) return;
+    document.getElementById('submit-btn').disabled = true;
+    showToast('Enviando ao Gov.br — acionando o robô...', 'info');
+
+    try {
+      const resposta = await fetch('/hub/portal/enviar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_processamento: idProcessamentoAtual }),
+      });
+      if (!resposta.ok) {
+        const erro = await resposta.json().catch(() => ({}));
+        showToast(erro.erro || 'Falha ao acionar o robô.', 'error');
+        document.getElementById('submit-btn').disabled = false;
+      }
+      // sucesso/erro real do robô chega via o mesmo stream SSE já aberto (rpa_iniciado -> concluido/erro)
+    } catch (error) {
+      showToast('Falha ao conectar com o servidor.', 'error');
+      document.getElementById('submit-btn').disabled = false;
+    }
   }
 
   // ── RESET ──
   function resetAll() {
+    if (streamAtivo) { streamAtivo.close(); streamAtivo = null; }
     files = [];
     processing = false;
     startTime = null;
+    idProcessamentoAtual = null;
     renderFileList();
     setStep(0);
 
@@ -1420,6 +1423,7 @@
       return;
     }
     const dados = await res.json();
+    idClienteAtual = dados.id_cliente;
     document.getElementById('escritorio-label').textContent = dados.nome_escritorio || '';
     const iniciais = (dados.nome_escritorio || 'GA')
       .split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
