@@ -1,7 +1,17 @@
 # Spec 09 — Gestão de Assinatura SaaS (Freemium)
 
 **Camada:** 3 — Painel de Gestão / Dashboard
-**Status:** Não implementado. Não existe conceito de plano/limite hoje — qualquer chamada a `POST /registro-empresa` é aceita sem restrição.
+**Status:** Implementado. Widget de plano no topo do dashboard ("X/Y automações usadas este mês") e bloqueio real de upload quando a cota é atingida.
+
+## 0. Nota de Implementação
+
+`GET /hub/portal/plano` (autenticado) expõe o consumo do mês corrente, reaproveitando `automacaoRepository.consumoMensalCliente`. O bloqueio (RF03) roda em `bloquearSeCotaExcedida`, um middleware que executa **antes** até do `multer` no endpoint `POST /hub/portal/arquivos` — o cliente no limite recebe `402` sem o arquivo sequer ser recebido pelo servidor, muito menos processado por OCR/RPA. RF04 (aviso proativo perto do limite) é um toast disparado no front quando falta 1 automação.
+
+**Decisão consciente:** a cota conta **toda tentativa** (sucesso ou erro), não só as concluídas com êxito — diferente do gráfico de ROI (spec 08), que só credita tempo economizado em sucessos. Faz sentido porque o custo de OCR/RPA já foi gasto mesmo numa tentativa que falhou; é o "recurso consumido" que importa aqui, não o "valor entregue".
+
+**Bug real encontrado e corrigido durante o teste:** `consumoMensalCliente` buscava `plano_saas`/`limite_documentos_mes` da view `vw_consumo_mensal_cliente`, que só tem linha para o cliente se ele **já tiver alguma automação no mês** (ela agrega a partir da tabela fato). Um cliente novo ou com limite customizado mas sem nenhuma automação ainda caía num fallback fixo (`limite = 5`), ignorando o limite real configurado. Corrigido buscando plano/limite sempre de `dim_cliente` (fonte da verdade, a linha existe desde o login) e só a contagem de uso da view.
+
+**Ainda falta** desta spec: upgrade de plano self-service e cobrança real — fora de escopo deste MVP (ver seção "Fora de Escopo" abaixo), documentado desde a primeira versão desta spec.
 
 ## 1. Objetivo
 

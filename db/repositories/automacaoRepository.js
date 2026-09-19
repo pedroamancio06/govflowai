@@ -112,16 +112,36 @@ async function listarPorCliente(idCliente, { status = null, pagina = 1, tamanho 
   return { itens: itens.rows, total: parseInt(total.rows[0].total, 10), pagina, tamanho };
 }
 
+// plano_saas/limite_documentos_mes vêm SEMPRE de dim_cliente (fonte da verdade,
+// a linha do cliente já existe desde o login). automacoes_no_mes vem da view
+// vw_consumo_mensal_cliente, que só tem linha pro cliente se ele já processou
+// alguma automação nesse mês — daí o COALESCE para 0 no cliente novo/sem uso.
+// Bug encontrado em teste: usar só a view (que agrega a partir da tabela fato)
+// fazia o limite cair num fallback fixo de 5 sempre que o cliente ainda não
+// tinha automação no mês, ignorando o limite real configurado nele.
 async function consumoMensalCliente(idCliente) {
   const db = getDb();
   const agora = new Date();
-  const r = await db.query(
-    `SELECT automacoes_no_mes, limite_documentos_mes, plano_saas
-     FROM vw_consumo_mensal_cliente
+
+  const cliente = await db.query(
+    `SELECT plano_saas, limite_documentos_mes FROM dim_cliente WHERE id_cliente = $1`,
+    [idCliente]
+  );
+  if (cliente.rows.length === 0) {
+    return { automacoes_no_mes: 0, limite_documentos_mes: 5, plano_saas: "free" };
+  }
+
+  const uso = await db.query(
+    `SELECT automacoes_no_mes FROM vw_consumo_mensal_cliente
      WHERE id_cliente = $1 AND ano = $2 AND mes = $3`,
     [idCliente, agora.getUTCFullYear(), agora.getUTCMonth() + 1]
   );
-  return r.rows[0] || { automacoes_no_mes: 0, limite_documentos_mes: 5, plano_saas: "free" };
+
+  return {
+    plano_saas: cliente.rows[0].plano_saas,
+    limite_documentos_mes: cliente.rows[0].limite_documentos_mes,
+    automacoes_no_mes: uso.rows[0] ? uso.rows[0].automacoes_no_mes : 0,
+  };
 }
 
 module.exports = { criar, atualizar, buscarPorId, listarPorCliente, consumoMensalCliente };

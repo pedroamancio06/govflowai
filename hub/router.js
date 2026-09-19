@@ -93,10 +93,24 @@ router.post("/arquivos", (req, res) => {
   });
 });
 
+// spec 09 (Freemium): verifica a cota ANTES de aceitar o upload — nunca gasta
+// OCR/RPA numa automação que será recusada. Roda antes até do multer, pra nem
+// receber o arquivo se o cliente já estourou o limite do mês.
+async function bloquearSeCotaExcedida(req, res, next) {
+  const consumo = await automacaoRepository.consumoMensalCliente(req.clienteId);
+  const usoAtual = parseInt(consumo.automacoes_no_mes, 10) || 0;
+  if (usoAtual >= consumo.limite_documentos_mes) {
+    return res.status(402).json({
+      erro: `Limite de ${consumo.limite_documentos_mes} automações do plano ${consumo.plano_saas} atingido este mês.`,
+    });
+  }
+  next();
+}
+
 // Canal Portal Web (autenticado via SSO, spec 02) — dashboard em /page.html.
 // Sem menu/estado de conversa: o serviço é sempre "abertura_redesim" (único
 // implementado no MVP), então o upload já dispara o pipeline diretamente.
-router.post("/portal/arquivos", requireSessaoApi, (req, res) => {
+router.post("/portal/arquivos", requireSessaoApi, bloquearSeCotaExcedida, (req, res) => {
   upload.single("arquivo")(req, res, async (err) => {
     if (err) {
       const motivo =
@@ -154,6 +168,18 @@ router.get("/portal/automacoes", requireSessaoApi, async (req, res) => {
 router.get("/portal/roi", requireSessaoApi, async (req, res) => {
   const dados = await relatorioRepository.roiPorCliente(req.clienteId);
   res.json(dados);
+});
+
+// spec 09 (RF02): consumo do plano Freemium no mês corrente.
+router.get("/portal/plano", requireSessaoApi, async (req, res) => {
+  const consumo = await automacaoRepository.consumoMensalCliente(req.clienteId);
+  const agora = new Date();
+  res.json({
+    plano_saas: consumo.plano_saas,
+    limite_mensal: consumo.limite_documentos_mes,
+    uso_mes_atual: parseInt(consumo.automacoes_no_mes, 10) || 0,
+    periodo: `${agora.getUTCFullYear()}-${String(agora.getUTCMonth() + 1).padStart(2, "0")}`,
+  });
 });
 
 // RF07-RF10: feedback proativo em tempo real via Server-Sent Events

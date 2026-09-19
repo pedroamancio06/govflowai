@@ -891,6 +891,36 @@
   .roi-canal-bar-fill { height: 100%; background: var(--green-forest); border-radius: 4px; transition: width 0.6s ease; }
   .roi-canal-pct { font-size: 0.76rem; font-weight: 700; color: var(--green-forest); width: 36px; text-align: right; flex-shrink: 0; }
   .roi-vazio { color: var(--ink-ghost); font-size: 0.8rem; padding: 0.5rem 1.4rem 1rem; }
+
+  /* ── PLANO SAAS FREEMIUM (spec 09) ── */
+  .plano-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0.9rem 1.3rem;
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 1.2rem;
+  }
+  .plano-info { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .plano-info i { width: 16px; height: 16px; color: var(--green-forest); }
+  .plano-label { font-size: 0.8rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .plano-bar-track {
+    flex: 1; height: 8px; background: var(--border-light);
+    border-radius: 4px; overflow: hidden; min-width: 80px;
+  }
+  .plano-bar-fill {
+    height: 100%; background: var(--green-forest); border-radius: 4px;
+    transition: width 0.5s ease, background 0.3s ease; width: 0%;
+  }
+  .plano-badge {
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 100px;
+    background: var(--green-mist); color: var(--green-forest); flex-shrink: 0;
+  }
+  @media (max-width: 600px) {
+    .plano-card { flex-wrap: wrap; }
+    .plano-bar-track { order: 3; width: 100%; }
+  }
 </style>
 </head>
 <body>
@@ -942,6 +972,20 @@
       <i data-lucide="calendar" style="width:13px;height:13px"></i>
       <span id="datetime-label"></span>
     </div>
+  </div>
+
+  <!-- PLANO SAAS FREEMIUM (spec 09) -->
+  <div class="plano-card" id="plano-card">
+    <span class="plano-badge" id="plano-badge">—</span>
+    <div class="plano-info">
+      <i data-lucide="gauge"></i>
+      <span class="plano-label" id="plano-label">Carregando plano...</span>
+    </div>
+    <div class="plano-bar-track"><div class="plano-bar-fill" id="plano-bar-fill"></div></div>
+    <button class="btn-outline" id="plano-cta" style="display:none; flex-shrink:0;" onclick="showToast('Upgrade de plano ainda não disponível nesta versão.', 'info')">
+      <i data-lucide="arrow-up-circle"></i>
+      Fazer upgrade
+    </button>
   </div>
 
   <!-- STEPPER -->
@@ -1460,6 +1504,7 @@
         streamAtivo.close();
         carregarHistorico(true); // automação terminou — já aparece no histórico
         carregarRoi(); // sucesso real — atualiza o gráfico de ROI também
+        carregarPlano(); // e o contador de cota do mês
       } else if (dadosEvento.tipo === 'erro') {
         processing = false;
         document.getElementById('process-btn').disabled = false;
@@ -1750,9 +1795,36 @@
     lucide.createIcons();
   }
 
+  // ── PLANO SAAS FREEMIUM (spec 09) ──
+  async function carregarPlano() {
+    const res = await fetch('/hub/portal/plano');
+    if (!res.ok) return;
+    const dados = await res.json();
+
+    const pct = dados.limite_mensal > 0 ? Math.min(100, Math.round((dados.uso_mes_atual / dados.limite_mensal) * 100)) : 0;
+    const nomePlano = dados.plano_saas === 'pro' ? 'Pro' : 'Gratuito';
+
+    document.getElementById('plano-badge').textContent = nomePlano;
+    document.getElementById('plano-label').textContent =
+      `${dados.uso_mes_atual}/${dados.limite_mensal} automações usadas este mês`;
+
+    const fill = document.getElementById('plano-bar-fill');
+    fill.style.width = `${pct}%`;
+    fill.style.background = pct >= 100 ? 'var(--error)' : (pct >= 80 ? 'var(--warn)' : 'var(--green-forest)');
+
+    // RF04: avisa proativamente perto do limite, sem bloquear o uso corrente
+    if (dados.uso_mes_atual >= dados.limite_mensal) {
+      document.getElementById('plano-cta').style.display = 'inline-flex';
+      showToast(`Limite do plano ${nomePlano} atingido este mês (${dados.uso_mes_atual}/${dados.limite_mensal}).`, 'error');
+    } else if (dados.uso_mes_atual === dados.limite_mensal - 1) {
+      showToast(`Você tem apenas 1 automação restante no plano ${nomePlano} este mês.`, 'info');
+    }
+  }
+
   carregarSessao();
   carregarHistorico(true);
   carregarRoi();
+  carregarPlano();
 </script>
 </body>
 </html>
