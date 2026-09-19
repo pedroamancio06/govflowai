@@ -12,7 +12,10 @@ async function executarRegistroEmpresa(dados, logger) {
     });
 
     const page = await browser.newPage();
-    const urlLocal = "http://localhost:3000/portal_fake.html";
+    // Antes hardcoded para localhost:3000 — quebrava silenciosamente se o
+    // servidor subisse em outra porta (ex.: 3000 ocupada por outro projeto).
+    // Agora respeita GOV_URL do .env, com esse mesmo valor como padrão.
+    const urlLocal = govUrl || "http://localhost:3000/portal_fake.html";
 
     logger.log("Acessando sistema governamental...");
     await page.goto(urlLocal, { waitUntil: "networkidle2" });
