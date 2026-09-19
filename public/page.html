@@ -921,6 +921,72 @@
     .plano-card { flex-wrap: wrap; }
     .plano-bar-track { order: 3; width: 100%; }
   }
+
+  /* ── ÍCONE DE CONFIGURAÇÕES + MODAL DE USUÁRIOS ── */
+  .icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--white);
+    display: grid; place-items: center;
+    cursor: pointer;
+    color: var(--ink-mid);
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { border-color: var(--green-mid); color: var(--green-forest); background: var(--green-mist); }
+  .icon-btn svg { width: 17px; height: 17px; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(17, 26, 15, 0.45);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-box {
+    background: var(--beige);
+    border-radius: 16px;
+    width: 100%; max-width: 520px;
+    max-height: 85vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 1.4rem; border-bottom: 1px solid var(--border);
+    background: var(--white); border-radius: 16px 16px 0 0;
+  }
+  .modal-header h2 { font-size: 1rem; font-weight: 800; color: var(--green-deep); }
+  .modal-body { padding: 1.2rem 1.4rem; }
+
+  .usuario-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0.7rem 0; border-bottom: 1px solid var(--border-light);
+  }
+  .usuario-row:last-child { border-bottom: none; }
+  .usuario-avatar {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    background: var(--green-forest); color: white;
+    display: grid; place-items: center; font-size: 0.72rem; font-weight: 700;
+  }
+  .usuario-info { flex: 1; min-width: 0; }
+  .usuario-nome { font-size: 0.84rem; font-weight: 700; color: var(--ink); }
+  .usuario-email { font-size: 0.72rem; color: var(--ink-soft); }
+  .usuario-papel {
+    font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 3px 9px; border-radius: 100px; flex-shrink: 0;
+    background: var(--green-mist); color: var(--green-forest);
+  }
+
+  .form-add-usuario {
+    display: flex; gap: 8px; margin-top: 1.2rem;
+    padding-top: 1.2rem; border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .form-add-usuario input {
+    flex: 1; min-width: 140px;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border);
+    font-family: 'Syne', sans-serif; font-size: 0.8rem;
+  }
+  .form-add-usuario input:focus { outline: none; border-color: var(--green-forest); }
 </style>
 </head>
 <body>
@@ -940,9 +1006,35 @@
     <span id="escritorio-label" style="font-size:0.72rem;font-weight:600;color:var(--ink-soft);"></span>
     <a href="/webchat.html" style="font-size:0.72rem;font-weight:700;color:var(--green-forest);text-decoration:none;border:1px solid var(--border);padding:6px 12px;border-radius:100px;">💬 Webchat</a>
     <div class="badge-status">SISTEMA ATIVO</div>
+    <button class="icon-btn" id="config-btn" title="Configurações — usuários da organização">
+      <i data-lucide="settings"></i>
+    </button>
     <div class="header-user" id="header-user" title="Sair" style="cursor:pointer;">AG</div>
   </div>
 </header>
+
+<!-- MODAL — USUÁRIOS DA ORGANIZAÇÃO -->
+<div class="modal-overlay" id="config-modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Usuários da Organização</h2>
+      <button class="icon-btn" id="fechar-config-modal"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="usuarios-lista">
+        <p style="color:var(--ink-ghost);font-size:0.8rem;">Carregando...</p>
+      </div>
+      <form class="form-add-usuario" id="form-add-usuario">
+        <input type="text" id="novo-usuario-nome" placeholder="Nome completo" required />
+        <input type="email" id="novo-usuario-email" placeholder="E-mail" required />
+        <button type="submit" class="btn-primary">
+          <i data-lucide="user-plus"></i>
+          Adicionar
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toasts"></div>
@@ -1628,9 +1720,11 @@
     const dados = await res.json();
     idClienteAtual = dados.id_cliente;
     document.getElementById('escritorio-label').textContent = dados.nome_escritorio || '';
-    const iniciais = (dados.nome_escritorio || 'GA')
+    const nomeParaIniciais = dados.nome_usuario || dados.nome_escritorio || 'GA';
+    const iniciais = nomeParaIniciais
       .split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
     document.getElementById('header-user').textContent = iniciais || 'GA';
+    document.getElementById('header-user').title = dados.nome_usuario || '';
   }
 
   document.getElementById('header-user').addEventListener('click', async () => {
@@ -1820,6 +1914,82 @@
       showToast(`Você tem apenas 1 automação restante no plano ${nomePlano} este mês.`, 'info');
     }
   }
+
+  // ── USUÁRIOS DA ORGANIZAÇÃO (painel de configurações) ──
+  function abrirConfigModal() {
+    document.getElementById('config-modal-overlay').style.display = 'flex';
+    carregarUsuarios();
+  }
+
+  function fecharConfigModalFn() {
+    document.getElementById('config-modal-overlay').style.display = 'none';
+  }
+
+  function iniciaisDe(nome) {
+    return (nome || '?').split(' ').filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+  }
+
+  async function carregarUsuarios() {
+    const lista = document.getElementById('usuarios-lista');
+    lista.innerHTML = '<p style="color:var(--ink-ghost);font-size:0.8rem;">Carregando...</p>';
+
+    const res = await fetch('/hub/portal/usuarios');
+    if (!res.ok) {
+      lista.innerHTML = '<p style="color:var(--error);font-size:0.8rem;">Não foi possível carregar os usuários.</p>';
+      return;
+    }
+    const dados = await res.json();
+
+    if (dados.itens.length === 0) {
+      lista.innerHTML = '<p style="color:var(--ink-ghost);font-size:0.8rem;">Nenhum usuário cadastrado.</p>';
+      return;
+    }
+
+    lista.innerHTML = '';
+    dados.itens.forEach(u => {
+      const row = document.createElement('div');
+      row.className = 'usuario-row';
+      row.innerHTML = `
+        <div class="usuario-avatar">${iniciaisDe(u.nome)}</div>
+        <div class="usuario-info">
+          <div class="usuario-nome">${u.nome}</div>
+          <div class="usuario-email">${u.email}</div>
+        </div>
+        <span class="usuario-papel">${u.papel === 'owner' ? 'Dono' : 'Membro'}</span>
+      `;
+      lista.appendChild(row);
+    });
+  }
+
+  document.getElementById('config-btn').addEventListener('click', abrirConfigModal);
+  document.getElementById('fechar-config-modal').addEventListener('click', fecharConfigModalFn);
+  document.getElementById('config-modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'config-modal-overlay') fecharConfigModalFn();
+  });
+
+  document.getElementById('form-add-usuario').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById('novo-usuario-nome').value.trim();
+    const email = document.getElementById('novo-usuario-email').value.trim();
+    if (!nome || !email) return;
+
+    const res = await fetch('/hub/portal/usuarios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, email }),
+    });
+
+    if (!res.ok) {
+      const erro = await res.json().catch(() => ({}));
+      showToast(erro.erro || 'Falha ao adicionar usuário.', 'error');
+      return;
+    }
+
+    document.getElementById('novo-usuario-nome').value = '';
+    document.getElementById('novo-usuario-email').value = '';
+    showToast(`${nome} adicionado(a) à organização!`, 'success');
+    carregarUsuarios();
+  });
 
   carregarSessao();
   carregarHistorico(true);

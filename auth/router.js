@@ -2,6 +2,7 @@ const express = require("express");
 const idp = require("./idpMock");
 const sessions = require("./sessions");
 const tenantStore = require("./tenantStore");
+const usuarioRepository = require("../db/repositories/usuarioRepository");
 const {
   requireSessaoApi,
   setCookie,
@@ -20,17 +21,21 @@ router.get("/idp/login", (req, res) => {
 });
 
 router.post("/idp/login", express.urlencoded({ extended: false }), (req, res) => {
-  const { redirect_uri: redirectUri, state, escritorio, email } = req.body;
+  const { redirect_uri: redirectUri, state, nome, escritorio, email } = req.body;
 
-  if (!escritorio || !email) {
+  if (!nome || !escritorio || !email) {
     return res.status(400).send(idp.paginaLogin({ redirectUri, state, erro: "Preencha todos os campos." }));
   }
 
-  const code = idp.gerarCodigo({ escritorio, email });
+  const code = idp.gerarCodigo({ nome, escritorio, email });
   res.redirect(`${redirectUri}?code=${code}&state=${state}`);
 });
 
 // ── Callback do GovFlow AI (RF01 + RF03) ────────────────────────────
+// Login "de verdade": a existência do e-mail na tabela `usuarios` decide o
+// caminho. E-mail já cadastrado -> entra na organização já existente
+// (o nome do escritório digitado é ignorado, o usuário já pertence a uma).
+// E-mail novo -> primeiro acesso: cria a organização e o usuário como "owner".
 router.get("/portal/callback", async (req, res) => {
   const { code, state } = req.query;
   const cookies = parseCookies(req);
@@ -44,8 +49,26 @@ router.get("/portal/callback", async (req, res) => {
     return res.status(400).send("Código de autenticação inválido ou expirado. Tente entrar novamente em /page.html.");
   }
 
-  const cliente = await tenantStore.resolverOuProvisionar(claims);
-  const token = sessions.criar(cliente.id_cliente, claims);
+  let usuario = await usuarioRepository.buscarPorEmail(claims.email);
+  let cliente;
+
+  if (usuario) {
+    cliente = await tenantStore.buscarPorId(usuario.id_cliente);
+  } else {
+    cliente = await tenantStore.resolverOuProvisionar({ escritorio: claims.escritorio, email: claims.email });
+    usuario = await usuarioRepository.criar({
+      idCliente: cliente.id_cliente,
+      nome: claims.nome,
+      email: claims.email,
+      papel: "owner",
+    });
+  }
+
+  const token = sessions.criar(cliente.id_cliente, {
+    ...claims,
+    usuarioId: usuario.id_usuario,
+    usuarioNome: usuario.nome,
+  });
 
   clearCookie(res, COOKIE_STATE);
   setCookie(res, COOKIE_SESSAO, token, { maxAgeMs: sessions.SESSAO_TTL_MS });
@@ -68,6 +91,8 @@ router.get("/portal/whoami", requireSessaoApi, async (req, res) => {
     nome_escritorio: cliente ? cliente.nome_escritorio : null,
     email: req.claims ? req.claims.email : null,
     plano_saas: cliente ? cliente.plano_saas : null,
+    id_usuario: req.claims ? req.claims.usuarioId : null,
+    nome_usuario: req.claims ? req.claims.usuarioNome : null,
   });
 });
 

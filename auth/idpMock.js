@@ -37,10 +37,13 @@ function paginaLogin({ redirectUri, state, erro }) {
     <form method="POST" action="/idp/login">
       <input type="hidden" name="redirect_uri" value="${redirectUri || ""}" />
       <input type="hidden" name="state" value="${state || ""}" />
+      <label>Seu nome</label>
+      <input type="text" name="nome" placeholder="Ex: Roberto Silva" required />
       <label>Nome do escritório</label>
       <input type="text" name="escritorio" placeholder="Ex: Contabilidade Roberto & Associados" required />
       <label>E-mail corporativo</label>
       <input type="email" name="email" placeholder="roberto@escritorio.com.br" required />
+      <p style="font-size:0.68rem;color:#6b8a68;margin:-8px 0 14px;">Se seu e-mail já foi cadastrado por alguém da sua organização, o nome do escritório acima é ignorado — você entra direto na organização existente.</p>
       <button type="submit">Entrar com Claro ID</button>
     </form>
   </div>

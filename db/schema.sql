@@ -37,6 +37,21 @@ CREATE TABLE IF NOT EXISTS dim_cliente (
 );
 
 -- ══════════════════════════════════════════════════════════
+-- USUARIOS  (pessoas com acesso a um escritório — não é dimensão
+-- analítica, é tabela operacional de controle de acesso)
+-- ══════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS usuarios (
+    id_usuario      UUID PRIMARY KEY,
+    id_cliente      UUID NOT NULL REFERENCES dim_cliente(id_cliente),
+    nome            VARCHAR(200) NOT NULL,
+    email           VARCHAR(150) NOT NULL UNIQUE,
+    papel           VARCHAR(20) NOT NULL DEFAULT 'membro'
+                        CHECK (papel IN ('owner', 'membro')),
+    criado_em       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_usuarios_cliente ON usuarios (id_cliente);
+
+-- ══════════════════════════════════════════════════════════
 -- DIM_CANAL
 -- ══════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS dim_canal (

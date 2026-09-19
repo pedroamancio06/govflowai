@@ -10,6 +10,7 @@ const eventBus = require("./eventBus");
 const { requireSessaoApi } = require("../auth/middleware");
 const automacaoRepository = require("../db/repositories/automacaoRepository");
 const relatorioRepository = require("../db/repositories/relatorioRepository");
+const usuarioRepository = require("../db/repositories/usuarioRepository");
 
 const router = express.Router();
 
@@ -180,6 +181,27 @@ router.get("/portal/plano", requireSessaoApi, async (req, res) => {
     uso_mes_atual: parseInt(consumo.automacoes_no_mes, 10) || 0,
     periodo: `${agora.getUTCFullYear()}-${String(agora.getUTCMonth() + 1).padStart(2, "0")}`,
   });
+});
+
+// Gestão de usuários da organização — painel de configurações do dashboard.
+router.get("/portal/usuarios", requireSessaoApi, async (req, res) => {
+  const usuarios = await usuarioRepository.listarPorCliente(req.clienteId);
+  res.json({ itens: usuarios });
+});
+
+router.post("/portal/usuarios", requireSessaoApi, async (req, res) => {
+  const { nome, email } = req.body || {};
+  if (!nome || !email) {
+    return res.status(400).json({ erro: "Nome e e-mail são obrigatórios." });
+  }
+
+  const existente = await usuarioRepository.buscarPorEmail(email);
+  if (existente) {
+    return res.status(409).json({ erro: "Já existe um usuário cadastrado com esse e-mail." });
+  }
+
+  const usuario = await usuarioRepository.criar({ idCliente: req.clienteId, nome, email, papel: "membro" });
+  res.status(201).json(usuario);
 });
 
 // RF07-RF10: feedback proativo em tempo real via Server-Sent Events
