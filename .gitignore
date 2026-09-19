@@ -24,3 +24,8 @@ ocr-service/test-fixtures/*.png
 declaracoes.json
 erro_screenshot.png
 __pycache__/
+
+# ATENÇÃO: pasta com o que parece ser um perfil real do Chrome (Login Data,
+# History, Sync Data) — nenhum código deste projeto cria/usa essa pasta.
+# Nunca deve ir para o Git (vazaria senhas salvas/histórico).
+chrome_profile_automacao/

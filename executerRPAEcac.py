@@ -57,17 +57,15 @@ def main():
             log("Clicando em 'Entrar com gov.br'...")
             page.click("#btn-entrar-govbr")
 
-            # Captcha simulado aparece aqui - pausa manual obrigatória mesmo
-            # sendo fictício, para preservar o hábito de nunca automatizar essa etapa.
-            input(
-                "\n>>> Resolva o captcha simulado na janela do navegador (marque a "
-                "caixinha e clique em Verificar).\n"
-                ">>> Pressione ENTER aqui no terminal quando puder continuar...\n"
-            )
-
-            # 3. Aguarda o redirecionamento para a tela de login simulada
-            log("Aguardando redirecionamento para a tela de login (simulada)...")
-            page.wait_for_url("**/ecac_fake/sso-login.html**", timeout=60000)
+            # Captcha simulado aparece aqui. Resolver (marcar a caixinha + clicar
+            # "Verificar") continua 100% manual na janela do navegador — nunca
+            # automatizado. Ao resolver, a página simulada navega sozinha para o
+            # próximo passo, e é isso que o wait_for_url abaixo espera: não existe
+            # pausa de terminal aqui de propósito (dependeria do stdin do processo
+            # do servidor estar anexado a um terminal interativo, o que nem sempre
+            # é verdade) — o próprio navegador já é o ponto de confirmação manual.
+            log("Aguardando você resolver o captcha simulado na janela do navegador...")
+            page.wait_for_url("**/ecac_fake/sso-login.html**", timeout=120000)
             log("Página de login gov.br (simulada) carregada.")
 
             # 4. Preenche o CPF
@@ -81,16 +79,11 @@ def main():
             page.fill("#password", SENHA)
             page.click("#submit-button")
 
-            # 2FA simulado pode aparecer aqui - pausa manual
-            input(
-                "\n>>> Confirme o 2FA simulado na janela do navegador (botão "
-                "'Confirmar').\n"
-                ">>> Pressione ENTER aqui no terminal quando puder continuar...\n"
-            )
-
-            # 6. Aguarda retorno à página principal do eCAC (simulada)
-            log("Aguardando carregamento da página principal do eCAC (simulada)...")
-            page.wait_for_url("**/ecac_fake/home.html**", timeout=60000)
+            # 2FA simulado pode aparecer aqui — mesmo raciocínio do captcha acima:
+            # confirmar o 2FA (botão "Confirmar") é manual na janela do navegador,
+            # e o wait_for_url abaixo é o que espera por isso, sem pausa de terminal.
+            log("Aguardando você confirmar o 2FA simulado na janela do navegador...")
+            page.wait_for_url("**/ecac_fake/home.html**", timeout=120000)
             page.wait_for_load_state("networkidle")
             log("Login concluído e página principal do eCAC carregada.")
 
@@ -147,7 +140,11 @@ def main():
             log("Screenshot do erro salvo em erro_screenshot.png")
             raise
         finally:
-            input("\nPressione ENTER para fechar o navegador...")
+            # Sem input() aqui: se o processo não tiver stdin interativo (ex.:
+            # rodando via robot/consultaEcac.js), input() derrubaria o script com
+            # EOFError em vez de simplesmente fechar o navegador. Dá uma folga
+            # visual antes de fechar, sem depender do terminal.
+            page.wait_for_timeout(3000)
             browser.close()
 
 
