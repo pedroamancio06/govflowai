@@ -71,6 +71,47 @@ async function buscarPorId(idProcessamento) {
   return r.rows[0] || null;
 }
 
+// RF01-RF02 (spec 07): histórico paginado de automações do escritório autenticado.
+// Filtro por status opcional; sempre restrito a id_cliente (isolamento multi-tenant).
+async function listarPorCliente(idCliente, { status = null, pagina = 1, tamanho = 20 } = {}) {
+  const db = getDb();
+  const offset = (pagina - 1) * tamanho;
+
+  const condicoes = ["f.id_cliente = $1"];
+  const params = [idCliente];
+  let i = 2;
+
+  if (status) {
+    condicoes.push(`s.nome_status = $${i++}`);
+    params.push(status);
+  }
+  const whereClause = condicoes.join(" AND ");
+
+  const itens = await db.query(
+    `SELECT f.id_processamento, f.protocolo_gerado, f.confianca_ocr, f.tipo_documento,
+            f.tempo_processamento_total_seg, f.categoria_erro, f.criado_em,
+            s.nome_status, c.nome_canal, g.nome_servico
+     FROM fato_processamento_automacoes f
+     JOIN dim_status s ON s.id_status = f.id_status
+     JOIN dim_canal c ON c.id_canal = f.id_canal
+     JOIN dim_servico_gov g ON g.id_servico_gov = f.id_servico_gov
+     WHERE ${whereClause}
+     ORDER BY f.criado_em DESC
+     LIMIT $${i++} OFFSET $${i}`,
+    [...params, tamanho, offset]
+  );
+
+  const total = await db.query(
+    `SELECT COUNT(*) AS total
+     FROM fato_processamento_automacoes f
+     JOIN dim_status s ON s.id_status = f.id_status
+     WHERE ${whereClause}`,
+    params
+  );
+
+  return { itens: itens.rows, total: parseInt(total.rows[0].total, 10), pagina, tamanho };
+}
+
 async function consumoMensalCliente(idCliente) {
   const db = getDb();
   const agora = new Date();
@@ -83,4 +124,4 @@ async function consumoMensalCliente(idCliente) {
   return r.rows[0] || { automacoes_no_mes: 0, limite_documentos_mes: 5, plano_saas: "free" };
 }
 
-module.exports = { criar, atualizar, buscarPorId, consumoMensalCliente };
+module.exports = { criar, atualizar, buscarPorId, listarPorCliente, consumoMensalCliente };

@@ -24,7 +24,7 @@ Documentação de produto para alinhar o projeto ao **Enterprise Challenge Claro
 ### Camada 3 — Painel de Gestão / Dashboard
 | Spec | Status |
 |---|---|
-| [07 — Painel de Acompanhamento (Status Board)](specs/07-painel-status-board.md) | Mock visual existente, sem dados reais |
+| [07 — Painel de Acompanhamento (Status Board)](specs/07-painel-status-board.md) | **Implementado** — histórico real de automações no dashboard, com filtro por status e detalhe expansível, testado visualmente (screenshot) e com isolamento multi-tenant validado |
 | [08 — Gráficos Analíticos de ROI](specs/08-graficos-roi.md) | Não implementado |
 | [09 — Gestão de Assinatura SaaS (Freemium)](specs/09-gestao-saas-freemium.md) | Não implementado |
 

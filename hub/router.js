@@ -8,6 +8,7 @@ const { handleTexto, mensagensMenu } = require("./flowEngine");
 const { iniciarPipeline, confirmarEnvio } = require("./pipeline");
 const eventBus = require("./eventBus");
 const { requireSessaoApi } = require("../auth/middleware");
+const automacaoRepository = require("../db/repositories/automacaoRepository");
 
 const router = express.Router();
 
@@ -135,6 +136,17 @@ router.post("/portal/enviar", requireSessaoApi, async (req, res) => {
   } catch (error) {
     res.status(404).json({ erro: error.message });
   }
+});
+
+// RF01-RF02 (spec 07): histórico de automações do escritório autenticado.
+router.get("/portal/automacoes", requireSessaoApi, async (req, res) => {
+  const { status = null, pagina = "1" } = req.query;
+  const resultado = await automacaoRepository.listarPorCliente(req.clienteId, {
+    status: status || null,
+    pagina: Math.max(1, parseInt(pagina, 10) || 1),
+    tamanho: 20,
+  });
+  res.json(resultado);
 });
 
 // RF07-RF10: feedback proativo em tempo real via Server-Sent Events

@@ -1,11 +1,17 @@
 # Spec 07 — Painel de Acompanhamento (Status Board)
 
 **Camada:** 3 — Painel de Gestão / Dashboard
-**Status:** Parcial. O card de upload/processamento em [public/page.html](../../public/page.html) já dispara o pipeline real (OCR via `POST /hub/portal/arquivos`, autenticado) e exibe os dados extraídos de verdade em "Dados Extraídos — Pré-Envio", em vez do mock anterior.
+**Status:** Implementado. O card de upload/processamento em [public/page.html](../../public/page.html) dispara o pipeline real (OCR via `POST /hub/portal/arquivos`, autenticado) e exibe os dados extraídos de verdade em "Dados Extraídos — Pré-Envio". Abaixo dele, o card **Histórico de Automações** lista as execuções passadas do escritório autenticado, com filtro por status e detalhe expansível por linha.
 
 **Fluxo em duas etapas, não mais automático de ponta a ponta:** o upload roda o OCR e PARA — o robô só é acionado quando o usuário clica em "Enviar ao Gov.br" (`POST /hub/portal/enviar`), nunca sozinho. A automação fica com status `aguardando_confirmacao` na tabela fato nesse meio-tempo, guardada em `hub/automacoesPendentes.js` (memória, efêmero) até a confirmação — com checagem de que só o próprio escritório autenticado pode confirmar a sua automação. `tempo_processamento_total_seg` é calculado como OCR + RPA apenas, nunca incluindo o tempo em que ficou esperando o clique do usuário (senão a métrica de ROI ficaria distorcida).
 
-**Ainda falta** a lista histórica de automações (RF01-RF06 desta spec) — hoje só existe a automação "em andamento" da sessão atual, sem persistir/listar execuções passadas na tela.
+## 0. Nota de Implementação — Histórico (RF01-RF02)
+
+`GET /hub/portal/automacoes` (autenticado, `db/repositories/automacaoRepository.js::listarPorCliente`) lista as automações do escritório logado, paginadas (20/página) e com filtro opcional por status. A lista atualiza sozinha assim que a automação em andamento termina (sucesso ou erro), sem precisar recarregar a página. Clicar numa linha expande um detalhe com protocolo, tipo de documento, confiança do OCR, tempo de processamento e categoria do erro (quando houver) — lido direto da tabela fato, sem depender do stream de eventos (que é efêmero e não existe mais para automações já concluídas).
+
+**Bug real encontrado e corrigido durante o teste:** a função de renderização limpava o `innerHTML` do container e, na sequência, tentava reaproveitar um elemento que morava dentro dele (`#historico-empty`) — o elemento já não existia mais, quebrando a montagem do estado vazio silenciosamente (erro engolido por uma Promise não tratada). Corrigido construindo o estado vazio como string a cada renderização, em vez de depender de um nó DOM persistente.
+
+**Ainda falta**, desta spec: filtro por período (dia/semana/mês — hoje só filtra por status), e ações de "reenviar"/"revisar" diretamente na lista (RF05-RF06) — hoje o usuário só visualiza o histórico, sem ação de retry embutida.
 
 ## 1. Objetivo
 
