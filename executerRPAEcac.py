@@ -5,9 +5,12 @@ Projeto acadêmico: GovFlow AI - TCC/Enterprise Challenge FIAP
 Este script NUNCA acessa o eCAC/gov.br real: todas as URLs abaixo apontam para
 public/ecac_fake/ (portal fictício servido pelo próprio Express da aplicação,
 mesmo padrão já usado em portal_fake.html para o robô da Redesim). Captcha e
-2FA são telas simuladas dentro desse portal fictício — a pausa manual abaixo
-continua existindo por design (nunca automatizar/burlar esses passos), mesmo
-não havendo proteção real por trás.
+2FA são telas simuladas dentro desse portal fictício — o robô resolve os dois
+sozinho (com uma pausa antes de cada clique, só pra ficar visível em
+apresentação/vídeo). Isso é diferente de burlar um captcha real de terceiro:
+aqui é só um checkbox decorativo numa página HTML que este mesmo projeto
+criou, sem nenhuma validação de verdade por trás — não há nada sendo
+contornado.
 
 Dependências: pip install playwright python-dotenv && playwright install chromium
 Requer o servidor Express rodando (node server.js) para servir public/ecac_fake/.
@@ -70,15 +73,18 @@ def main():
             log("Clicando em 'Entrar com gov.br'...")
             page.click("#btn-entrar-govbr")
 
-            # Captcha simulado aparece aqui. Resolver (marcar a caixinha + clicar
-            # "Verificar") continua 100% manual na janela do navegador — nunca
-            # automatizado. Ao resolver, a página simulada navega sozinha para o
-            # próximo passo, e é isso que o wait_for_url abaixo espera: não existe
-            # pausa de terminal aqui de propósito (dependeria do stdin do processo
-            # do servidor estar anexado a um terminal interativo, o que nem sempre
-            # é verdade) — o próprio navegador já é o ponto de confirmação manual.
-            log("Aguardando você resolver o captcha simulado na janela do navegador...")
-            page.wait_for_url("**/ecac_fake/sso-login.html**", timeout=120000)
+            # Captcha simulado: o robô resolve sozinho (marca a caixinha "Não
+            # sou um robô" e clica em "Verificar"), com uma pausa antes só pra
+            # dar tempo de acompanhar na tela — é um checkbox decorativo desta
+            # própria página fictícia, sem validação real nenhuma por trás.
+            log("Aguardando um instante antes de marcar 'Não sou um robô' (simulado)...")
+            page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
+            page.check("#captcha-checkbox")
+            page.wait_for_timeout(800)
+            page.click("#captcha-verificar")
+
+            log("Captcha simulado resolvido. Aguardando redirecionamento...")
+            page.wait_for_url("**/ecac_fake/sso-login.html**", timeout=30000)
             log("Página de login gov.br (simulada) carregada.")
             page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
 
@@ -97,11 +103,16 @@ def main():
             page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
             page.click("#submit-button")
 
-            # 2FA simulado pode aparecer aqui — mesmo raciocínio do captcha acima:
-            # confirmar o 2FA (botão "Confirmar") é manual na janela do navegador,
-            # e o wait_for_url abaixo é o que espera por isso, sem pausa de terminal.
-            log("Aguardando você confirmar o 2FA simulado na janela do navegador...")
-            page.wait_for_url("**/ecac_fake/home.html**", timeout=120000)
+            # 2FA simulado: mesmo raciocínio do captcha — o robô confirma
+            # sozinho, com uma pausa antes pra ficar visível.
+            log("Aguardando o 2FA simulado aparecer...")
+            page.wait_for_selector("#overlay-2fa.aberto", timeout=TIMEOUT_PADRAO)
+            log("Aguardando um instante antes de confirmar o 2FA simulado...")
+            page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
+            page.click("#confirmar-2fa")
+
+            log("2FA simulado confirmado. Aguardando página principal do eCAC...")
+            page.wait_for_url("**/ecac_fake/home.html**", timeout=30000)
             page.wait_for_load_state("networkidle")
             log("Login concluído e página principal do eCAC carregada.")
             page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)

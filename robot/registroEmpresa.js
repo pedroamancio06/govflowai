@@ -10,7 +10,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function executarRegistroEmpresa(dados, logger) {
+async function executarRegistroEmpresa(dados, logger, protocolo) {
   let browser;
 
   try {
@@ -121,10 +121,18 @@ async function executarRegistroEmpresa(dados, logger) {
     await page.click("#submit-registro");
     await sleep(PAUSA_ENTRE_ETAPAS_MS);
 
+    // Mostra na própria tela o protocolo já gerado no backend (hub/pipeline.js)
+    // — mesmo valor que vai pro banco, nunca um número inventado aqui, senão
+    // o que aparece no portal divergiria do que fica registrado.
+    logger.log(`Protocolo gerado: ${protocolo}`);
+    await page.evaluate((numeroProtocolo) => window.mostrarProtocolo(numeroProtocolo), protocolo);
+    await sleep(PAUSA_ENTRE_ETAPAS_MS);
+
     logger.log("Registro enviado!");
 
     return {
       success: true,
+      protocolo,
     };
   } catch (error) {
     logger.log("Erro no robô: " + error.message);

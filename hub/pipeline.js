@@ -81,12 +81,15 @@ async function executarEtapaRpa({ idProcessamento, usuarioId, dados, tempoOcrMs,
   const inicioRpa = Date.now();
   const logger = new Logger((logObj) => publicar(logObj.message, "info", "rpa_progresso"));
 
-  const resultado = await executarRegistroEmpresa(dados, logger);
+  // Gerado ANTES do robô rodar (não depois) para que o mesmo número apareça
+  // na tela do portal fictício (robot/registroEmpresa.js: mostrarProtocolo)
+  // e no banco — uma única fonte de verdade, nunca dois valores divergentes.
+  const protocolo = gerarProtocoloFake();
+  const resultado = await executarRegistroEmpresa(dados, logger, protocolo);
   const tempoRpaMs = Date.now() - inicioRpa;
   const tempoProcessamentoTotalSeg = Math.round((tempoOcrMs + tempoRpaMs) / 1000);
 
   if (resultado.success) {
-    const protocolo = gerarProtocoloFake();
     if (session) session.estado = "concluido";
     await automacaoRepository.atualizar(idProcessamento, {
       status: "sucesso",

@@ -2,49 +2,151 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Portal do Governo - Registro</title>
+    <title>Redesim — Registro e Licenciamento de Empresas (Simulação)</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #e9ecef; }
-        .form-box { background: white; padding: 20px; border: 1px solid #ccc; max-width: 500px; }
-        input { display: block; width: 90%; margin-bottom: 10px; padding: 8px; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; background: #f0f0f0; }
+        .topbar { background: #1c1c1c; color: #fff; font-size: 0.75rem; padding: 6px 16px; }
+        .brasil-bar { background: #fff; border-bottom: 1px solid #ddd; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+        .brasil-bar .brand { display: flex; align-items: center; gap: 8px; font-weight: bold; color: #1351b4; font-size: 1.1rem; }
+        .brasil-bar .orgao { font-size: 0.75rem; color: #555; }
+        .selo { background: #ffcd07; color: #1c1c1c; font-size: 0.65rem; padding: 3px 10px; border-radius: 100px; margin-left: 10px; }
+
+        main { max-width: 640px; margin: 30px auto; padding: 0 16px; }
+        .card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 28px; margin-bottom: 20px; }
+        .card h1 { font-size: 1.1rem; color: #1351b4; margin: 0 0 4px; }
+        .card h2 { font-size: 1rem; color: #333; margin: 0 0 4px; }
+        .card h3 { font-size: 0.88rem; color: #333; margin: 18px 0 10px; }
+        .card .hint { font-size: 0.78rem; color: #777; margin-bottom: 20px; }
+
+        label { font-size: 0.78rem; color: #333; display: block; margin-bottom: 6px; font-weight: bold; }
+        input { width: 100%; padding: 10px 12px; margin-bottom: 16px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
+        input:focus { outline: none; border-color: #1351b4; }
+
+        button.primary { background: #1351b4; color: #fff; border: none; padding: 11px 22px; border-radius: 100px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+        button.primary:hover { background: #0d3f8f; }
+        button.primary:disabled { background: #99a8c9; cursor: not-allowed; }
+        button.secondary { background: #fff; color: #1351b4; border: 1.5px solid #1351b4; padding: 9px 18px; border-radius: 100px; font-weight: bold; cursor: pointer; font-size: 0.82rem; }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px; border: 1px solid #ddd; border-radius: 6px;
+            cursor: pointer; font-weight: bold; color: #1351b4;
+        }
+        .menu-item:hover { background: #eaf2fb; border-color: #1351b4; }
+
+        .socio-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .socio-row input { margin-bottom: 0; }
+
+        #protocolo-card { display: none; text-align: center; }
+        #protocolo-card .check { font-size: 2.4rem; margin-bottom: 6px; }
+        #protocolo-card p { font-size: 0.85rem; color: #555; margin-bottom: 4px; }
+        #protocolo-numero {
+            font-family: 'Courier New', monospace; font-size: 1.5rem; font-weight: bold;
+            color: #1c5d1c; background: #dff0d8; border: 1px solid #3c763d;
+            border-radius: 6px; padding: 14px; margin: 14px 0;
+        }
     </style>
 </head>
 <body>
-    <h1>Sistema de Registro Mercantil</h1>
-    <div class="form-box" id="form-registro">
-        <input type="text" id="username" placeholder="Login">
-        <input type="password" id="password" placeholder="Senha">
-        <button id="login-button">Entrar</button>
-        <hr>
-        <div id="menu-registro-empresa" style="cursor:pointer; color: blue;">[ Menu: Novo Registro ]</div>
-        <hr>
-        <input type="text" id="cnpj" placeholder="CNPJ">
-        <input type="text" id="razaoSocial" placeholder="Razão Social">
-        <input type="text" id="capitalSocial" placeholder="Capital">
-        <div id="socios-list"></div>
-        <button id="add-socio">Adicionar Sócio</button>
-        <button id="submit-registro">Enviar Registro</button>
+    <div class="topbar">Simulação acadêmica — GovFlow AI (TCC/Enterprise Challenge FIAP)</div>
+    <div class="brasil-bar">
+        <div>
+            <div class="brand">🇧🇷 REDESIM <span class="selo">SIMULAÇÃO</span></div>
+            <div class="orgao">Rede Nacional para a Simplificação do Registro de Empresas — Junta Comercial</div>
+        </div>
     </div>
 
+    <main>
+        <div class="card" id="login-box">
+            <h1>Acesso ao Sistema</h1>
+            <p class="hint">Ambiente fictício para fins de demonstração acadêmica — nenhum dado é enviado à Junta Comercial real.</p>
+            <label>Usuário</label>
+            <input type="text" id="username" placeholder="Login">
+            <label>Senha</label>
+            <input type="password" id="password" placeholder="Senha">
+            <button class="primary" id="login-button">Entrar</button>
+        </div>
+
+        <div class="card" id="dashboard-box" style="display:none;">
+            <h1>Painel Redesim</h1>
+            <p class="hint">Selecione um serviço para continuar.</p>
+            <div class="menu-item" id="menu-registro-empresa">
+                📄 Novo Registro de Empresa
+            </div>
+        </div>
+
+        <div class="card" id="form-registro" style="display:none;">
+            <h2>Registro Mercantil — Novo Registro</h2>
+            <p class="hint">Preencha os dados abaixo conforme o Contrato Social.</p>
+
+            <label>CNPJ</label>
+            <input type="text" id="cnpj" placeholder="00.000.000/0000-00">
+
+            <label>Razão Social</label>
+            <input type="text" id="razaoSocial" placeholder="Nome empresarial">
+
+            <label>Capital Social (R$)</label>
+            <input type="text" id="capitalSocial" placeholder="0,00">
+
+            <h3>Quadro Societário (QSA)</h3>
+            <div id="socios-list"></div>
+            <button type="button" class="secondary" id="add-socio">+ Adicionar Sócio</button>
+
+            <div style="margin-top: 24px; border-top: 1px solid #eee; padding-top: 20px;">
+                <button class="primary" id="submit-registro">Enviar Registro</button>
+            </div>
+        </div>
+
+        <div class="card" id="protocolo-card">
+            <div class="check">✅</div>
+            <h2>Registro Enviado com Sucesso</h2>
+            <p>Protocolo gerado pela Junta Comercial (simulado):</p>
+            <div id="protocolo-numero"></div>
+            <p class="hint">Guarde este número para acompanhamento do processo.</p>
+        </div>
+    </main>
+
     <script>
-        // Mock mínimo para o robô Puppeteer (robot/registroEmpresa.js) ter algo real
-        // para interagir: login precisa navegar de fato, e "Adicionar Sócio" precisa
-        // criar as linhas .socio-row que o robô procura.
+        // Mock para o robô Puppeteer (robot/registroEmpresa.js) interagir de
+        // verdade: login navega (?logado=1), menu revela o form, sócios geram
+        // linhas reais, e mostrarProtocolo() é chamada pelo robô já com o
+        // protocolo gerado no backend — nunca um valor inventado aqui, pra não
+        // divergir do que fica gravado no banco.
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('logado') === '1') {
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('dashboard-box').style.display = 'block';
+        }
+
         document.getElementById('login-button').addEventListener('click', () => {
             window.location.href = window.location.pathname + '?logado=1';
+        });
+
+        document.getElementById('menu-registro-empresa').addEventListener('click', () => {
+            document.getElementById('dashboard-box').style.display = 'none';
+            document.getElementById('form-registro').style.display = 'block';
         });
 
         document.getElementById('add-socio').addEventListener('click', () => {
             const row = document.createElement('div');
             row.className = 'socio-row';
             row.innerHTML = '<input class="nome" type="text" placeholder="Nome do sócio">' +
-                             '<input class="participacao" type="text" placeholder="Participação">';
+                             '<input class="participacao" type="text" placeholder="Participação (%)">';
             document.getElementById('socios-list').appendChild(row);
         });
 
         document.getElementById('submit-registro').addEventListener('click', () => {
-            document.getElementById('submit-registro').textContent = 'Registro Enviado ✓';
+            const botao = document.getElementById('submit-registro');
+            botao.textContent = 'Enviando...';
+            botao.disabled = true;
         });
+
+        window.mostrarProtocolo = function (protocolo) {
+            document.getElementById('form-registro').style.display = 'none';
+            document.getElementById('protocolo-card').style.display = 'block';
+            document.getElementById('protocolo-numero').textContent = protocolo;
+        };
     </script>
 </body>
 </html>
