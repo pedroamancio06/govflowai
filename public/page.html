@@ -835,7 +835,12 @@
   .historico-badge-processando,
   .historico-badge-recebido { background: #dbeafe; color: #3b82f6; }
 
-  .historico-servico { font-size: 0.82rem; font-weight: 700; color: var(--ink); flex: 1; }
+  .historico-servico-wrap { flex: 1; min-width: 0; }
+  .historico-servico { font-size: 0.82rem; font-weight: 700; color: var(--ink); }
+  .historico-empresa {
+    font-size: 0.72rem; color: var(--ink-soft); margin-top: 1px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .historico-canal {
     font-size: 0.68rem; font-weight: 600; color: var(--ink-soft);
     text-transform: uppercase; letter-spacing: 0.03em;
@@ -1844,7 +1849,10 @@
     el.innerHTML = `
       <div class="historico-item-main">
         <span class="historico-badge historico-badge-${item.nome_status}">${badgeLabel}</span>
-        <span class="historico-servico">${item.nome_servico}</span>
+        <div class="historico-servico-wrap">
+          <div class="historico-servico">${item.nome_servico}</div>
+          ${item.razao_social ? `<div class="historico-empresa">${item.razao_social}${item.cnpj ? ' · ' + item.cnpj : ''}</div>` : ''}
+        </div>
         <span class="historico-canal">${item.nome_canal}</span>
         <span class="historico-data">${formatarDataHistorico(item.criado_em)}</span>
         <i data-lucide="chevron-down" class="historico-chevron"></i>
@@ -1861,6 +1869,8 @@
     if (!aberto) { detalhe.style.display = 'none'; return; }
 
     const campos = [];
+    if (item.razao_social) campos.push({ key: 'Razão Social', val: item.razao_social });
+    if (item.cnpj) campos.push({ key: 'CNPJ', val: item.cnpj });
     if (item.protocolo_gerado) campos.push({ key: 'Protocolo', val: item.protocolo_gerado });
     if (item.tipo_documento) campos.push({ key: 'Tipo de Documento', val: item.tipo_documento });
     if (item.confianca_ocr != null) campos.push({ key: 'Confiança OCR', val: `${(item.confianca_ocr * 100).toFixed(0)}%` });

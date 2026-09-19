@@ -318,6 +318,10 @@ async function iniciarPipeline({ session, arquivo, idClienteConhecido = null, ca
       }
 
       const dados = mapearParaRobo(resultadoOcr.dados);
+      // CNPJ/Razão Social extraídos ficam gravados assim que o OCR termina —
+      // não esperam o RPA rodar, então aparecem no Histórico de Automações
+      // (spec 07) mesmo que a confirmação/envio ainda não tenha acontecido.
+      await automacaoRepository.atualizar(idProcessamento, { cnpj: dados.cnpj, razaoSocial: dados.razaoSocial });
       publicar(`✅ Dados extraídos com sucesso (confiança ${confiancaPct}%).`, "info", "ocr_concluido", {
         dadosExtraidos: resultadoOcr.dados,
         tipoDocumento: resultadoOcr.tipo_documento,

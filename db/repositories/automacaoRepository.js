@@ -21,6 +21,8 @@ const MAPA_COLUNAS = {
   tipoDocumento: "tipo_documento",
   confiancaOcr: "confianca_ocr",
   tempoOcrMs: "tempo_ocr_ms",
+  cnpj: "cnpj",
+  razaoSocial: "razao_social",
   tempoRpaMs: "tempo_rpa_ms",
   protocoloGerado: "protocolo_gerado",
   tentativasRpa: "tentativas_rpa",
@@ -90,6 +92,7 @@ async function listarPorCliente(idCliente, { status = null, pagina = 1, tamanho 
   const itens = await db.query(
     `SELECT f.id_processamento, f.protocolo_gerado, f.confianca_ocr, f.tipo_documento,
             f.tempo_processamento_total_seg, f.categoria_erro, f.criado_em,
+            f.cnpj, f.razao_social,
             s.nome_status, c.nome_canal, g.nome_servico
      FROM fato_processamento_automacoes f
      JOIN dim_status s ON s.id_status = f.id_status

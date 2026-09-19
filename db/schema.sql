@@ -142,6 +142,8 @@ CREATE TABLE IF NOT EXISTS fato_processamento_automacoes (
     tipo_documento               VARCHAR(50),
     confianca_ocr                DECIMAL(5,2),
     tempo_ocr_ms                 INTEGER,
+    cnpj                         VARCHAR(18),
+    razao_social                 VARCHAR(200),
 
     tempo_rpa_ms                  INTEGER,
     protocolo_gerado             VARCHAR(50),
@@ -156,6 +158,13 @@ CREATE TABLE IF NOT EXISTS fato_processamento_automacoes (
     criado_em                    TIMESTAMPTZ NOT NULL DEFAULT now(),
     atualizado_em                 TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- CNPJ/Razão Social extraídos pelo OCR (spec 04) — colunas adicionadas depois
+-- da tabela original já estar em uso no Neon; ADD COLUMN IF NOT EXISTS cobre
+-- tanto o banco existente (sobe as colunas novas) quanto uma instalação nova
+-- (a CREATE TABLE acima já as inclui, então isso vira no-op).
+ALTER TABLE fato_processamento_automacoes ADD COLUMN IF NOT EXISTS cnpj VARCHAR(18);
+ALTER TABLE fato_processamento_automacoes ADD COLUMN IF NOT EXISTS razao_social VARCHAR(200);
 
 CREATE INDEX IF NOT EXISTS idx_fato_cliente        ON fato_processamento_automacoes (id_cliente);
 CREATE INDEX IF NOT EXISTS idx_fato_tempo          ON fato_processamento_automacoes (id_tempo);
