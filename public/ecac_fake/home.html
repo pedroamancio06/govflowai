@@ -27,11 +27,19 @@
 
   <main>
     <h1>Bem-vindo(a) ao Centro Virtual de Atendimento (simulação)</h1>
+    <p id="cpf-autenticado" style="font-size:0.85rem;color:#555;margin:-12px 0 20px;"></p>
     <div class="servicos">
       <a href="portalmir.html" target="_blank" class="servico-card">Meu Imposto de Renda</a>
       <span class="servico-card desabilitado">Certidões (indisponível na simulação)</span>
       <span class="servico-card desabilitado">Parcelamentos (indisponível na simulação)</span>
     </div>
   </main>
+
+  <script>
+    const cpf = localStorage.getItem('ecac_fake_cpf');
+    if (cpf) {
+      document.getElementById('cpf-autenticado').textContent = `CPF autenticado: ${cpf}`;
+    }
+  </script>
 </body>
 </html>

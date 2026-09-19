@@ -38,6 +38,12 @@ URL_INICIAL = os.getenv("ECAC_URL", "http://localhost:3000/ecac_fake/autenticaca
 TIMEOUT_PADRAO = 30000  # 30s
 ANOS_DESEJADOS = 3  # quantidade de exercícios mais recentes a extrair
 
+# Ritmo pensado para apresentação/gravação: digitação caractere a caractere
+# (em vez de preencher instantâneo) e pausas entre etapas, pra dar pra
+# acompanhar visualmente o CPF do cliente selecionado sendo usado no login.
+DELAY_DIGITACAO_MS = 110
+PAUSA_ENTRE_ETAPAS_MS = 1200
+
 
 def log(msg):
     print(f"[RPA] {msg}")
@@ -50,7 +56,7 @@ def main():
         )
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, slow_mo=150)
+        browser = p.chromium.launch(headless=False, slow_mo=350)
         context = browser.new_context()
         page = context.new_page()
         page.set_default_timeout(TIMEOUT_PADRAO)
@@ -74,16 +80,21 @@ def main():
             log("Aguardando você resolver o captcha simulado na janela do navegador...")
             page.wait_for_url("**/ecac_fake/sso-login.html**", timeout=120000)
             log("Página de login gov.br (simulada) carregada.")
+            page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
 
-            # 4. Preenche o CPF
-            log("Preenchendo CPF...")
-            page.fill("#accountId", CPF)
+            # 4. Preenche o CPF do cliente selecionado para a consulta — digitado
+            # caractere a caractere (não .fill() instantâneo) pra ficar visível
+            # que é exatamente o CPF do cliente escolhido na página de gestão.
+            log(f"Preenchendo CPF do cliente consultado: {CPF}")
+            page.type("#accountId", CPF, delay=DELAY_DIGITACAO_MS)
+            page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
             page.click("#enter-account-id")
 
             # 5. Aguarda o campo de senha aparecer e preenche
             log("Aguardando campo de senha...")
             page.wait_for_selector("#password", state="visible")
-            page.fill("#password", SENHA)
+            page.type("#password", SENHA, delay=DELAY_DIGITACAO_MS)
+            page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
             page.click("#submit-button")
 
             # 2FA simulado pode aparecer aqui — mesmo raciocínio do captcha acima:
@@ -93,6 +104,7 @@ def main():
             page.wait_for_url("**/ecac_fake/home.html**", timeout=120000)
             page.wait_for_load_state("networkidle")
             log("Login concluído e página principal do eCAC carregada.")
+            page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
 
             # 7. Clica em "Meu Imposto de Renda" (abre em nova aba)
             log("Clicando em 'Meu Imposto de Renda'...")
@@ -106,8 +118,12 @@ def main():
             mir_page.wait_for_url("**/ecac_fake/portalmir.html**", timeout=60000)
             mir_page.wait_for_load_state("networkidle")
             log("Portal MIR carregado.")
+            mir_page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
 
-            # 9. Extrai status das declarações (linhas .declaracao-ano)
+            # 9. Extrai status das declarações (linhas .declaracao-ano) — o
+            # portal fictício varia a situação exibida conforme o CPF logado
+            # (ver public/ecac_fake/portalmir.html), então o que sai daqui é
+            # de fato lido da tela, não um valor fixo no script.
             log("Extraindo status das declarações...")
             declaracoes = []
 
@@ -135,6 +151,9 @@ def main():
                     "situacao": situacao_texto,
                 })
                 log(f"  -> {ano_texto}: {situacao_texto}")
+                mir_page.wait_for_timeout(400)
+
+            mir_page.wait_for_timeout(PAUSA_ENTRE_ETAPAS_MS)
 
             # 10. Salva em JSON
             with open(ARQUIVO_SAIDA, "w", encoding="utf-8") as f:

@@ -10,7 +10,8 @@
   .header { background: #1351b4; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
   .selo { background: #ffcd07; color: #1c1c1c; font-size: 0.65rem; padding: 3px 10px; border-radius: 100px; }
   main { max-width: 800px; margin: 30px auto; padding: 0 16px; }
-  h1 { font-size: 1.1rem; color: #333; margin-bottom: 20px; }
+  h1 { font-size: 1.1rem; color: #333; margin-bottom: 6px; }
+  #cpf-consultado { font-size: 0.82rem; color: #555; margin-bottom: 20px; }
   .declaracao-ano { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
   .declaracao-ano button { background: #1351b4; color: #fff; border: none; padding: 8px 20px; border-radius: 100px; font-weight: bold; cursor: pointer; }
   .situacao { font-size: 0.85rem; font-weight: bold; padding: 4px 12px; border-radius: 100px; }
@@ -27,19 +28,52 @@
 
   <main>
     <h1>Minhas Declarações de Imposto de Renda</h1>
-
-    <div class="declaracao-ano">
-      <button>2025</button>
-      <div class="situacao regular">Regular</div>
-    </div>
-    <div class="declaracao-ano">
-      <button>2024</button>
-      <div class="situacao regular">Regular</div>
-    </div>
-    <div class="declaracao-ano">
-      <button>2023</button>
-      <div class="situacao pendente">Pendente de Regularização</div>
-    </div>
+    <p id="cpf-consultado"></p>
+    <div id="declaracoes-lista"></div>
   </main>
+
+  <script>
+    // A situação exibida varia conforme o CPF logado (guardado em
+    // localStorage por sso-login.html) — propositalmente NÃO é fixa, pra
+    // deixar claro que o robô está lendo o que está na tela, não repetindo
+    // um valor fixo no script. Regra simples e fácil de controlar numa
+    // apresentação: último dígito do CPF par -> tudo regular, ímpar -> uma
+    // pendência (basta cadastrar dois clientes com CPFs terminados em
+    // dígitos de paridades diferentes pra mostrar os dois resultados).
+    const VARIANTES = [
+      [
+        { exercicio: '2025', situacao: 'Regular' },
+        { exercicio: '2024', situacao: 'Regular' },
+        { exercicio: '2023', situacao: 'Regular' },
+      ],
+      [
+        { exercicio: '2025', situacao: 'Regular' },
+        { exercicio: '2024', situacao: 'Pendente de Regularização' },
+        { exercicio: '2023', situacao: 'Regular' },
+      ],
+    ];
+
+    function escolherVariante(cpf) {
+      if (!cpf) return 0;
+      const digitos = cpf.replace(/\D/g, '');
+      const ultimoDigito = Number(digitos[digitos.length - 1] || 0);
+      return ultimoDigito % VARIANTES.length;
+    }
+
+    function situacaoClasse(situacao) {
+      return situacao.toLowerCase().includes('pendente') ? 'pendente' : 'regular';
+    }
+
+    const cpf = localStorage.getItem('ecac_fake_cpf');
+    document.getElementById('cpf-consultado').textContent = cpf ? `CPF consultado: ${cpf}` : '';
+
+    const variante = VARIANTES[escolherVariante(cpf)];
+    document.getElementById('declaracoes-lista').innerHTML = variante.map(d => `
+      <div class="declaracao-ano">
+        <button>${d.exercicio}</button>
+        <div class="situacao ${situacaoClasse(d.situacao)}">${d.situacao}</div>
+      </div>
+    `).join('');
+  </script>
 </body>
 </html>

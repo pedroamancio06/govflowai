@@ -50,6 +50,12 @@
 
   <script>
     document.getElementById('enter-account-id').addEventListener('click', () => {
+      // Guarda o CPF digitado (localStorage é compartilhado entre abas da
+      // mesma origem) para o Portal MIR variar a situação exibida conforme
+      // o cliente logado — não fica sempre a mesma declaração fixa.
+      const cpf = document.getElementById('accountId').value.trim();
+      if (cpf) localStorage.setItem('ecac_fake_cpf', cpf);
+
       document.getElementById('cpf-wrap').style.display = 'none';
       document.getElementById('password-wrap').style.display = 'block';
     });

@@ -1,6 +1,15 @@
 const puppeteer = require("puppeteer");
 const { govUser, govPassword, govUrl } = require("../config/env");
 
+// Ritmo pensado para apresentação/gravação: dá tempo de acompanhar cada campo
+// sendo preenchido com o dado que veio do OCR, em vez de piscar na tela.
+const DELAY_DIGITACAO_MS = 90;
+const PAUSA_ENTRE_ETAPAS_MS = 1200;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function executarRegistroEmpresa(dados, logger) {
   let browser;
 
@@ -9,6 +18,7 @@ async function executarRegistroEmpresa(dados, logger) {
 
     browser = await puppeteer.launch({
       headless: false,
+      slowMo: 60,
     });
 
     const page = await browser.newPage();
@@ -27,14 +37,16 @@ async function executarRegistroEmpresa(dados, logger) {
     */
 
     logger.log("Autenticando...");
-    
+
     // Espera o campo aparecer antes de digitar
     await page.waitForSelector("#username");
 
-    await page.type("#username", govUser, { delay: 100 });
-    await page.type("#password", govPassword, { delay: 100 });
+    await page.type("#username", govUser, { delay: DELAY_DIGITACAO_MS });
+    await page.type("#password", govPassword, { delay: DELAY_DIGITACAO_MS });
+    await sleep(PAUSA_ENTRE_ETAPAS_MS);
 
     await Promise.all([page.click("#login-button"), page.waitForNavigation()]);
+    await sleep(PAUSA_ENTRE_ETAPAS_MS);
 
     /*
     ======================
@@ -47,32 +59,36 @@ async function executarRegistroEmpresa(dados, logger) {
     await page.click("#menu-registro-empresa");
 
     await page.waitForSelector("#form-registro");
+    await sleep(PAUSA_ENTRE_ETAPAS_MS);
 
     /*
     ======================
-    PREENCHER CAMPOS
+    PREENCHER CAMPOS (dados extraídos pelo OCR — ver hub/pipeline.js: mapearParaRobo)
     ======================
     */
 
-    logger.log("Preenchendo CNPJ...");
-    await page.type("#cnpj", dados.cnpj, { delay: 100 });
+    logger.log(`Preenchendo CNPJ (extraído do documento): ${dados.cnpj}`);
+    await page.type("#cnpj", dados.cnpj, { delay: DELAY_DIGITACAO_MS });
+    await sleep(PAUSA_ENTRE_ETAPAS_MS);
 
-    logger.log("Preenchendo Razão Social...");
-    await page.type("#razaoSocial", dados.razaoSocial, { delay: 100 });
+    logger.log(`Preenchendo Razão Social (extraída do documento): ${dados.razaoSocial}`);
+    await page.type("#razaoSocial", dados.razaoSocial, { delay: DELAY_DIGITACAO_MS });
+    await sleep(PAUSA_ENTRE_ETAPAS_MS);
 
     logger.log("Preenchendo Capital Social...");
-    await page.type("#capitalSocial", dados.capitalSocial || "10000");
+    await page.type("#capitalSocial", dados.capitalSocial || "10000", { delay: DELAY_DIGITACAO_MS });
+    await sleep(PAUSA_ENTRE_ETAPAS_MS);
 
     /*
     ======================
-    SOCIOS
+    SOCIOS (também extraídos do documento — QSA do OCR)
     ======================
     */
 
-    logger.log("Preenchendo quadro societário...");
+    logger.log("Preenchendo quadro societário (extraído do documento)...");
 
     for (const socio of dados.socios) {
-      logger.log(`Adicionando sócio: ${socio.nome}`);
+      logger.log(`Adicionando sócio: ${socio.nome} (${socio.participacao})`);
 
       await page.click("#add-socio");
 
@@ -82,20 +98,19 @@ async function executarRegistroEmpresa(dados, logger) {
 
       const ultimaLinha = rows[rows.length - 1];
 
-      await ultimaLinha.$eval(
-        "input.nome",
-        (el, nome) => (el.value = nome),
-        socio.nome,
-      );
+      // .type() em vez de setar .value direto — digitação visível, igual aos
+      // outros campos, para dar pra acompanhar em apresentação/gravação.
+      const inputNome = await ultimaLinha.$("input.nome");
+      await inputNome.type(socio.nome, { delay: DELAY_DIGITACAO_MS });
 
-      await ultimaLinha.$eval(
-        "input.participacao",
-        (el, part) => (el.value = part),
-        socio.participacao,
-      );
+      const inputParticipacao = await ultimaLinha.$("input.participacao");
+      await inputParticipacao.type(socio.participacao, { delay: DELAY_DIGITACAO_MS });
+
+      await sleep(PAUSA_ENTRE_ETAPAS_MS);
     }
 
     logger.log("Formulário preenchido com sucesso!");
+    await sleep(PAUSA_ENTRE_ETAPAS_MS);
 
     /*
     ======================
@@ -104,6 +119,7 @@ async function executarRegistroEmpresa(dados, logger) {
     */
 
     await page.click("#submit-registro");
+    await sleep(PAUSA_ENTRE_ETAPAS_MS);
 
     logger.log("Registro enviado!");
 
