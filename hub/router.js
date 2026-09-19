@@ -239,6 +239,39 @@ router.post("/portal/ecac/clientes", requireSessaoApi, async (req, res) => {
   res.status(201).json(clienteEcac);
 });
 
+router.put("/portal/ecac/clientes/:id", requireSessaoApi, async (req, res) => {
+  const { nome, cpf, senha } = req.body || {};
+  if (!nome || !cpf) {
+    return res.status(400).json({ erro: "Nome e CPF são obrigatórios." });
+  }
+
+  const atual = await clienteEcacRepository.buscarPorId(req.params.id, req.clienteId);
+  if (!atual) {
+    return res.status(404).json({ erro: "Cliente não encontrado." });
+  }
+
+  const conflito = await clienteEcacRepository.buscarPorCpf(req.clienteId, cpf);
+  if (conflito && conflito.id_cliente_ecac !== req.params.id) {
+    return res.status(409).json({ erro: "Já existe outro cliente cadastrado com esse CPF." });
+  }
+
+  const atualizado = await clienteEcacRepository.atualizarDados(req.params.id, req.clienteId, { nome, cpf, senha });
+  res.json(atualizado);
+});
+
+router.delete("/portal/ecac/clientes/:id", requireSessaoApi, async (req, res) => {
+  const atual = await clienteEcacRepository.buscarPorId(req.params.id, req.clienteId);
+  if (!atual) {
+    return res.status(404).json({ erro: "Cliente não encontrado." });
+  }
+  if (atual.status_consulta === "processando") {
+    return res.status(409).json({ erro: "Não é possível excluir um cliente com consulta em andamento." });
+  }
+
+  await clienteEcacRepository.deletar(req.params.id, req.clienteId);
+  res.status(204).end();
+});
+
 // Dispara (ou reprocessa) a consulta e-CAC simulada para um cliente já
 // cadastrado. Fire-and-forget: evolui via SSE no mesmo canal do usuário
 // logado, igual ao restante do pipeline.

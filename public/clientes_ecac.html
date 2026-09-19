@@ -116,6 +116,42 @@
   }
   .toast.erro { background: var(--error); }
   .toast.sucesso { background: var(--green-forest); }
+
+  .acoes-col { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-icon-secondary {
+    display: grid; place-items: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--white); border: 1.5px solid var(--border); color: var(--ink-mid);
+    cursor: pointer;
+  }
+  .btn-icon-secondary:hover { border-color: var(--green-mid); color: var(--green-forest); background: var(--green-mist); }
+  .btn-icon-secondary.perigo:hover { border-color: var(--error); color: var(--error); background: #fdecea; }
+  .btn-icon-secondary svg { width: 14px; height: 14px; }
+  .btn-icon-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(17, 26, 15, 0.45); align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.aberto { display: flex; }
+  .modal-box {
+    background: var(--beige); border-radius: 16px; width: 100%; max-width: 440px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 1.4rem; border-bottom: 1px solid var(--border);
+    background: var(--white); border-radius: 16px 16px 0 0;
+  }
+  .modal-header h2 { font-size: 1rem; font-weight: 800; color: var(--green-deep); }
+  .modal-body { padding: 1.2rem 1.4rem; display: flex; flex-direction: column; gap: 10px; }
+  .modal-body label { font-size: 0.72rem; font-weight: 700; color: var(--ink-soft); }
+  .modal-body input {
+    padding: 10px 13px; border-radius: 8px; border: 1px solid var(--border);
+    font-family: 'Syne', sans-serif; font-size: 0.82rem;
+  }
+  .modal-body input:focus { outline: none; border-color: var(--green-forest); }
+  .modal-body .btn-primary { justify-content: center; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -156,6 +192,28 @@
     </div>
   </div>
 </main>
+
+<div class="modal-overlay" id="editar-modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Editar cliente</h2>
+      <button type="button" class="btn-icon-secondary" id="fechar-editar-modal"><i data-lucide="x"></i></button>
+    </div>
+    <form class="modal-body" id="form-editar-cliente">
+      <input type="hidden" id="editar-cliente-id" />
+      <label>Nome do cliente</label>
+      <input type="text" id="editar-cliente-nome" required />
+      <label>CPF</label>
+      <input type="text" id="editar-cliente-cpf" required />
+      <label>Nova senha simulada (deixe em branco para manter a atual)</label>
+      <input type="password" id="editar-cliente-senha" placeholder="••••••••" />
+      <button type="submit" class="btn-primary">
+        <i data-lucide="save"></i>
+        Salvar alterações
+      </button>
+    </form>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -220,16 +278,29 @@
         </td>
         <td class="coluna-resultado">${colunaResultado}</td>
         <td>
-          <button class="btn-secondary btn-consultar" ${emAndamento ? 'disabled' : ''} data-id="${cliente.id_cliente_ecac}">
-            <i data-lucide="refresh-cw"></i>
-            ${cliente.status_consulta === 'nunca_executado' ? 'Consultar' : 'Reprocessar'}
-          </button>
+          <div class="acoes-col">
+            <button class="btn-secondary btn-consultar" ${emAndamento ? 'disabled' : ''} data-id="${cliente.id_cliente_ecac}">
+              <i data-lucide="refresh-cw"></i>
+              ${cliente.status_consulta === 'nunca_executado' ? 'Consultar' : 'Reprocessar'}
+            </button>
+            <button class="btn-icon-secondary btn-editar" ${emAndamento ? 'disabled' : ''} data-id="${cliente.id_cliente_ecac}" title="Editar">
+              <i data-lucide="pencil"></i>
+            </button>
+            <button class="btn-icon-secondary perigo btn-excluir" ${emAndamento ? 'disabled' : ''} data-id="${cliente.id_cliente_ecac}" title="Excluir">
+              <i data-lucide="trash-2"></i>
+            </button>
+          </div>
         </td>
       </tr>
     `;
   }
 
+  const clientesPorId = new Map();
+
   function renderTabela(clientes) {
+    clientesPorId.clear();
+    clientes.forEach(c => clientesPorId.set(c.id_cliente_ecac, c));
+
     const wrap = document.getElementById('tabela-wrap');
     if (clientes.length === 0) {
       wrap.innerHTML = '<p class="estado-vazio">Nenhum cliente cadastrado ainda. Adicione um acima.</p>';
@@ -249,6 +320,12 @@
     document.querySelectorAll('.btn-consultar').forEach(btn => {
       btn.addEventListener('click', () => consultarCliente(btn.dataset.id));
     });
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+      btn.addEventListener('click', () => abrirEditarModal(btn.dataset.id));
+    });
+    document.querySelectorAll('.btn-excluir').forEach(btn => {
+      btn.addEventListener('click', () => excluirCliente(btn.dataset.id));
+    });
   }
 
   async function carregarClientes() {
@@ -256,6 +333,35 @@
     if (res.status === 401) { window.location.reload(); return; }
     const dados = await res.json();
     renderTabela(dados.itens);
+  }
+
+  function abrirEditarModal(id) {
+    const cliente = clientesPorId.get(id);
+    if (!cliente) return;
+    document.getElementById('editar-cliente-id').value = cliente.id_cliente_ecac;
+    document.getElementById('editar-cliente-nome').value = cliente.nome;
+    document.getElementById('editar-cliente-cpf').value = cliente.cpf;
+    document.getElementById('editar-cliente-senha').value = '';
+    document.getElementById('editar-modal-overlay').classList.add('aberto');
+  }
+
+  function fecharEditarModal() {
+    document.getElementById('editar-modal-overlay').classList.remove('aberto');
+  }
+
+  async function excluirCliente(id) {
+    const cliente = clientesPorId.get(id);
+    if (!cliente) return;
+    if (!confirm(`Excluir "${cliente.nome}"? Essa ação não pode ser desfeita.`)) return;
+
+    const res = await fetch(`/hub/portal/ecac/clientes/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const erro = await res.json().catch(() => ({}));
+      showToast(erro.erro || 'Falha ao excluir cliente.', 'erro');
+      return;
+    }
+    showToast(`${cliente.nome} removido(a).`, 'sucesso');
+    carregarClientes();
   }
 
   async function consultarCliente(id) {
@@ -293,6 +399,36 @@
     carregarClientes();
   });
 
+  document.getElementById('fechar-editar-modal').addEventListener('click', fecharEditarModal);
+  document.getElementById('editar-modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'editar-modal-overlay') fecharEditarModal();
+  });
+
+  document.getElementById('form-editar-cliente').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editar-cliente-id').value;
+    const nome = document.getElementById('editar-cliente-nome').value.trim();
+    const cpf = document.getElementById('editar-cliente-cpf').value.trim();
+    const senha = document.getElementById('editar-cliente-senha').value;
+    if (!nome || !cpf) return;
+
+    const res = await fetch(`/hub/portal/ecac/clientes/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, cpf, senha }),
+    });
+
+    if (!res.ok) {
+      const erro = await res.json().catch(() => ({}));
+      showToast(erro.erro || 'Falha ao salvar alterações.', 'erro');
+      return;
+    }
+
+    fecharEditarModal();
+    showToast('Cliente atualizado!', 'sucesso');
+    carregarClientes();
+  });
+
   function iniciarStream() {
     const es = new EventSource(`/hub/eventos/${usuarioId}/stream`);
     es.onmessage = (event) => {
@@ -305,8 +441,7 @@
           const badge = linha.querySelector('.status-badge');
           badge.className = 'status-badge processando';
           badge.innerHTML = '<span class="status-dot processando"></span> Processando';
-          const btn = linha.querySelector('.btn-consultar');
-          if (btn) btn.disabled = true;
+          linha.querySelectorAll('.btn-consultar, .btn-editar, .btn-excluir').forEach(btn => { btn.disabled = true; });
         }
       }
 

@@ -1000,8 +1000,9 @@
   }
   .menu-dropdown.aberto { display: block; }
   .menu-dropdown-item {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; gap: 12px; width: 100%;
     padding: 10px 12px; border-radius: 8px; text-decoration: none; color: var(--ink);
+    border: none; background: none; font-family: 'Syne', sans-serif; text-align: left; cursor: pointer;
   }
   .menu-dropdown-item:hover { background: var(--green-mist); }
   .menu-dropdown-item svg { width: 18px; height: 18px; color: var(--green-forest); flex-shrink: 0; }
@@ -1019,6 +1020,20 @@
         <i data-lucide="menu"></i>
       </button>
       <div class="menu-dropdown" id="menu-dropdown">
+        <a href="/webchat.html" class="menu-dropdown-item">
+          <i data-lucide="message-circle"></i>
+          <div>
+            <div class="menu-dropdown-item-title">Webchat</div>
+            <div class="menu-dropdown-item-sub">Atendimento conversacional</div>
+          </div>
+        </a>
+        <button type="button" class="menu-dropdown-item" id="menu-config-btn">
+          <i data-lucide="settings"></i>
+          <div>
+            <div class="menu-dropdown-item-title">Configurações</div>
+            <div class="menu-dropdown-item-sub">Usuários da organização</div>
+          </div>
+        </button>
         <a href="/clientes_ecac.html" class="menu-dropdown-item">
           <i data-lucide="file-search"></i>
           <div>
@@ -1040,11 +1055,7 @@
   </div>
   <div class="header-right">
     <span id="escritorio-label" style="font-size:0.72rem;font-weight:600;color:var(--ink-soft);"></span>
-    <a href="/webchat.html" style="font-size:0.72rem;font-weight:700;color:var(--green-forest);text-decoration:none;border:1px solid var(--border);padding:6px 12px;border-radius:100px;">💬 Webchat</a>
     <div class="badge-status">SISTEMA ATIVO</div>
-    <button class="icon-btn" id="config-btn" title="Configurações — usuários da organização">
-      <i data-lucide="settings"></i>
-    </button>
     <div class="header-user" id="header-user" title="Sair" style="cursor:pointer;">AG</div>
   </div>
 </header>
@@ -2006,7 +2017,10 @@
     if (!wrap.contains(e.target)) document.getElementById('menu-dropdown').classList.remove('aberto');
   });
 
-  document.getElementById('config-btn').addEventListener('click', abrirConfigModal);
+  document.getElementById('menu-config-btn').addEventListener('click', () => {
+    document.getElementById('menu-dropdown').classList.remove('aberto');
+    abrirConfigModal();
+  });
   document.getElementById('fechar-config-modal').addEventListener('click', fecharConfigModalFn);
   document.getElementById('config-modal-overlay').addEventListener('click', (e) => {
     if (e.target.id === 'config-modal-overlay') fecharConfigModalFn();

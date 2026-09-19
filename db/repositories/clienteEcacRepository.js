@@ -51,4 +51,26 @@ async function atualizarStatus(idClienteEcac, { status, declaracoes = null, erro
   );
 }
 
-module.exports = { listarPorCliente, buscarPorId, buscarPorCpf, criar, atualizarStatus };
+// senha vazia/ausente mantém a senha_simulada atual (edição sem trocar credencial).
+async function atualizarDados(idClienteEcac, idCliente, { nome, cpf, senha }) {
+  const db = getDb();
+  const r = await db.query(
+    `UPDATE clientes_ecac
+     SET nome = $3, cpf = $4, senha_simulada = COALESCE(NULLIF($5, ''), senha_simulada)
+     WHERE id_cliente_ecac = $1 AND id_cliente = $2
+     RETURNING id_cliente_ecac, nome, cpf, status_consulta, declaracoes, erro_mensagem, atualizado_em, criado_em`,
+    [idClienteEcac, idCliente, nome, cpf, senha || ""]
+  );
+  return r.rows[0] || null;
+}
+
+async function deletar(idClienteEcac, idCliente) {
+  const db = getDb();
+  const r = await db.query(
+    `DELETE FROM clientes_ecac WHERE id_cliente_ecac = $1 AND id_cliente = $2 RETURNING id_cliente_ecac`,
+    [idClienteEcac, idCliente]
+  );
+  return r.rows.length > 0;
+}
+
+module.exports = { listarPorCliente, buscarPorId, buscarPorCpf, criar, atualizarStatus, atualizarDados, deletar };
