@@ -17,6 +17,8 @@ app.use(express.json());
 
 // Portal Web / SSO (spec 02) — protege o dashboard antes do static servir o arquivo
 app.use(authRouter);
+app.get("/", (req, res) => res.redirect("/page.html"));
+app.get("/favicon.ico", (req, res) => res.sendFile(path.join(__dirname, "public", "favicon.svg")));
 app.get("/page.html", requireSessaoPagina, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "page.html"));
 });
