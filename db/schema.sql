@@ -142,6 +142,8 @@ GROUP BY f.id_cliente, dt.ano, dt.mes, c.limite_documentos_mes, c.plano_saas;
 -- ══════════════════════════════════════════════════════════
 -- View de ROI agregado por cliente/mês (dashboard — spec 08)
 -- ══════════════════════════════════════════════════════════
+-- Só conta automações com status 'sucesso' — uma automação que deu erro não
+-- economizou tempo nenhum (não terminou a tarefa), então não deve inflar o ROI.
 CREATE OR REPLACE VIEW vw_roi_por_periodo AS
 SELECT
     f.id_cliente,
@@ -152,4 +154,6 @@ SELECT
     SUM(f.tempo_economizado_seg) AS economizado_seg
 FROM fato_processamento_automacoes f
 JOIN dim_tempo dt ON dt.id_tempo = f.id_tempo
+JOIN dim_status st ON st.id_status = f.id_status
+WHERE st.nome_status = 'sucesso'
 GROUP BY f.id_cliente, dt.ano, dt.mes;

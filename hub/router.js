@@ -9,6 +9,7 @@ const { iniciarPipeline, confirmarEnvio } = require("./pipeline");
 const eventBus = require("./eventBus");
 const { requireSessaoApi } = require("../auth/middleware");
 const automacaoRepository = require("../db/repositories/automacaoRepository");
+const relatorioRepository = require("../db/repositories/relatorioRepository");
 
 const router = express.Router();
 
@@ -147,6 +148,12 @@ router.get("/portal/automacoes", requireSessaoApi, async (req, res) => {
     tamanho: 20,
   });
   res.json(resultado);
+});
+
+// spec 08: gráficos analíticos de ROI (tempo economizado + distribuição por canal).
+router.get("/portal/roi", requireSessaoApi, async (req, res) => {
+  const dados = await relatorioRepository.roiPorCliente(req.clienteId);
+  res.json(dados);
 });
 
 // RF07-RF10: feedback proativo em tempo real via Server-Sent Events

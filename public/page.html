@@ -850,6 +850,47 @@
   }
   .historico-item-detalhe .data-key { font-size: 0.64rem; }
   .historico-item-detalhe .data-val { font-size: 0.8rem; }
+
+  /* ── GRÁFICOS DE ROI (spec 08) ── */
+  .roi-highlight {
+    display: flex; align-items: center; gap: 16px;
+    padding: 1rem 1.4rem;
+    background: var(--green-mist);
+    margin: 1rem 1.4rem 0.5rem;
+    border-radius: 12px;
+  }
+  .roi-highlight-value {
+    font-size: 1.7rem; font-weight: 700; color: var(--green-forest);
+    font-family: 'Instrument Serif', serif; font-style: italic;
+  }
+  .roi-highlight-label { font-size: 0.76rem; color: var(--green-deep); font-weight: 600; }
+
+  .roi-chart-wrap {
+    display: flex; align-items: flex-end; gap: 18px;
+    min-height: 150px; padding: 1rem 1.4rem 0.3rem;
+    overflow-x: auto;
+  }
+  .roi-chart-month { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; min-width: 50px; }
+  .roi-bars { display: flex; align-items: flex-end; gap: 4px; height: 120px; }
+  .roi-bar { width: 16px; border-radius: 4px 4px 0 0; transition: height 0.6s ease; }
+  .roi-bar-manual { background: var(--beige-dark); }
+  .roi-bar-real { background: var(--green-forest); }
+  .roi-chart-label { font-size: 0.66rem; color: var(--ink-soft); font-weight: 600; }
+
+  .roi-legend { display: flex; gap: 16px; padding: 0 1.4rem 1rem; font-size: 0.72rem; color: var(--ink-soft); }
+  .roi-legend-item { display: flex; align-items: center; gap: 6px; }
+  .roi-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  .roi-canal-lista { padding: 1rem 1.4rem 1.2rem; display: flex; flex-direction: column; gap: 12px; }
+  .roi-canal-row { display: flex; align-items: center; gap: 10px; }
+  .roi-canal-nome {
+    font-size: 0.74rem; font-weight: 700; color: var(--ink); width: 90px; flex-shrink: 0;
+    text-transform: uppercase; letter-spacing: 0.02em;
+  }
+  .roi-canal-bar-track { flex: 1; height: 8px; background: var(--border-light); border-radius: 4px; overflow: hidden; }
+  .roi-canal-bar-fill { height: 100%; background: var(--green-forest); border-radius: 4px; transition: width 0.6s ease; }
+  .roi-canal-pct { font-size: 0.76rem; font-weight: 700; color: var(--green-forest); width: 36px; text-align: right; flex-shrink: 0; }
+  .roi-vazio { color: var(--ink-ghost); font-size: 0.8rem; padding: 0.5rem 1.4rem 1rem; }
 </style>
 </head>
 <body>
@@ -1121,6 +1162,35 @@
     </button>
   </div>
 
+  <!-- GRÁFICOS DE ROI (spec 08) -->
+  <div class="card" id="roi-card">
+    <div class="card-header">
+      <span class="section-label">
+        <i data-lucide="trending-up"></i>
+        ROI — Tempo Economizado
+      </span>
+    </div>
+    <div class="roi-highlight">
+      <i data-lucide="clock" style="width:28px;height:28px;color:var(--green-forest)"></i>
+      <div>
+        <div class="roi-highlight-value" id="roi-highlight-value">—</div>
+        <div class="roi-highlight-label">economizados até agora, comparado ao processo manual</div>
+      </div>
+    </div>
+    <div class="roi-chart-wrap" id="roi-chart-wrap"></div>
+    <div class="roi-legend">
+      <span class="roi-legend-item"><span class="roi-legend-dot" style="background:var(--beige-dark)"></span>Tempo manual estimado</span>
+      <span class="roi-legend-item"><span class="roi-legend-dot" style="background:var(--green-forest)"></span>Tempo real (GovFlow AI)</span>
+    </div>
+    <div class="card-header" style="border-top:1px solid var(--border-light)">
+      <span class="section-label">
+        <i data-lucide="pie-chart"></i>
+        Distribuição por Canal
+      </span>
+    </div>
+    <div class="roi-canal-lista" id="roi-canal-lista"></div>
+  </div>
+
 </main>
 
 <script>
@@ -1389,6 +1459,7 @@
         showToast('Processamento concluído com sucesso!', 'success');
         streamAtivo.close();
         carregarHistorico(true); // automação terminou — já aparece no histórico
+        carregarRoi(); // sucesso real — atualiza o gráfico de ROI também
       } else if (dadosEvento.tipo === 'erro') {
         processing = false;
         document.getElementById('process-btn').disabled = false;
@@ -1619,8 +1690,69 @@
     detalhe.style.display = 'grid';
   }
 
+  // ── GRÁFICOS DE ROI (spec 08) ──
+  const NOME_MES_CURTO = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+  function formatarSegundosParaHoras(segundos) {
+    if (segundos < 60) return `${segundos}s`;
+    if (segundos < 3600) return `${Math.round(segundos / 60)} min`;
+    const horas = segundos / 3600;
+    return `${horas % 1 === 0 ? horas : horas.toFixed(1)}h`;
+  }
+
+  async function carregarRoi() {
+    const res = await fetch('/hub/portal/roi');
+    if (!res.ok) return;
+    const dados = await res.json();
+
+    document.getElementById('roi-highlight-value').textContent = formatarSegundosParaHoras(dados.tempo_economizado_seg_total);
+
+    const chartWrap = document.getElementById('roi-chart-wrap');
+    chartWrap.innerHTML = '';
+    if (dados.serie_temporal.length === 0) {
+      chartWrap.innerHTML = '<p class="roi-vazio">Ainda não há automações concluídas com sucesso para exibir o gráfico.</p>';
+    } else {
+      const maxValor = Math.max(...dados.serie_temporal.map(m => m.manual_estimado_seg), 1);
+      dados.serie_temporal.forEach(mes => {
+        const [ano, mesNum] = mes.mes.split('-');
+        const label = `${NOME_MES_CURTO[parseInt(mesNum, 10) - 1]}/${ano.slice(2)}`;
+        const alturaManual = Math.max((mes.manual_estimado_seg / maxValor) * 120, 4);
+        const alturaReal = Math.max((mes.real_seg / maxValor) * 120, 4);
+        const el = document.createElement('div');
+        el.className = 'roi-chart-month';
+        el.innerHTML = `
+          <div class="roi-bars">
+            <div class="roi-bar roi-bar-manual" style="height:${alturaManual}px" title="Manual: ${formatarSegundosParaHoras(mes.manual_estimado_seg)}"></div>
+            <div class="roi-bar roi-bar-real" style="height:${alturaReal}px" title="Real: ${formatarSegundosParaHoras(mes.real_seg)}"></div>
+          </div>
+          <span class="roi-chart-label">${label}</span>
+        `;
+        chartWrap.appendChild(el);
+      });
+    }
+
+    const canalLista = document.getElementById('roi-canal-lista');
+    canalLista.innerHTML = '';
+    if (dados.distribuicao_canal.length === 0) {
+      canalLista.innerHTML = '<p class="roi-vazio">Nenhuma automação registrada ainda.</p>';
+    } else {
+      dados.distribuicao_canal.forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'roi-canal-row';
+        row.innerHTML = `
+          <span class="roi-canal-nome">${c.canal.replace('_', ' ')}</span>
+          <div class="roi-canal-bar-track"><div class="roi-canal-bar-fill" style="width:${c.percentual}%"></div></div>
+          <span class="roi-canal-pct">${c.percentual}%</span>
+        `;
+        canalLista.appendChild(row);
+      });
+    }
+    lucide.createIcons();
+  }
+
   carregarSessao();
   carregarHistorico(true);
+  carregarRoi();
 </script>
 </body>
 </html>

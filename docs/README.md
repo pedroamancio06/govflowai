@@ -25,7 +25,7 @@ Documentação de produto para alinhar o projeto ao **Enterprise Challenge Claro
 | Spec | Status |
 |---|---|
 | [07 — Painel de Acompanhamento (Status Board)](specs/07-painel-status-board.md) | **Implementado** — histórico real de automações no dashboard, com filtro por status e detalhe expansível, testado visualmente (screenshot) e com isolamento multi-tenant validado |
-| [08 — Gráficos Analíticos de ROI](specs/08-graficos-roi.md) | Não implementado |
+| [08 — Gráficos Analíticos de ROI](specs/08-graficos-roi.md) | **Implementado** — tempo economizado (destaque + gráfico mensal manual vs. real) e distribuição por canal, com dados reais do banco em nuvem |
 | [09 — Gestão de Assinatura SaaS (Freemium)](specs/09-gestao-saas-freemium.md) | Não implementado |
 
 Cada spec segue o mesmo formato: Objetivo → Estado Atual/Gap (referenciando o código real do repositório) → Requisitos Funcionais → Requisitos Não Funcionais → Contrato de API/Dados → Critérios de Aceite → Dependências → Fora de Escopo.

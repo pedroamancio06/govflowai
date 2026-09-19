@@ -1,7 +1,17 @@
 # Spec 08 — Gráficos Analíticos de ROI
 
 **Camada:** 3 — Painel de Gestão / Dashboard
-**Status:** Não implementado. O dashboard atual não possui nenhum gráfico agregado — apenas o cartão de dados de uma única automação simulada.
+**Status:** Implementado. Card "ROI — Tempo Economizado" no dashboard, com destaque numérico, gráfico de barras (manual vs. real, por mês) e distribuição por canal — todos com dados reais.
+
+## 0. Nota de Implementação
+
+`GET /hub/portal/roi` (autenticado, `db/repositories/relatorioRepository.js::roiPorCliente`) reaproveita a view `vw_roi_por_periodo` já criada na Sprint 1 do banco, mais uma agregação simples por canal. O gráfico (barras manual vs. real por mês) e a distribuição por canal são renderizados com CSS puro — sem biblioteca externa de gráficos, consistente com o restante do projeto, que ficou deliberadamente enxuto em dependências de front-end.
+
+**Correção de regra de negócio feita durante a implementação:** a view original somava `tempo_economizado_seg` de **todas** as automações, inclusive as que terminaram em erro — o que inflava o ROI com processos que não completaram a tarefa e não economizaram tempo nenhum. Corrigido para contar só automações com `status = 'sucesso'`.
+
+**Testado:** cálculo validado batendo exatamente com os valores esperados (2400s manual − 31s real = 2369s economizados), e conferido visualmente via screenshot.
+
+**Ainda falta** desta spec: drill-down (clicar num canal do gráfico para filtrar o histórico por aquele canal, RF05) e seleção de período customizado (hoje agrega por mês corrido, sem seletor de intervalo).
 
 ## 1. Objetivo
 
