@@ -52,6 +52,30 @@ CREATE TABLE IF NOT EXISTS usuarios (
 CREATE INDEX IF NOT EXISTS idx_usuarios_cliente ON usuarios (id_cliente);
 
 -- ══════════════════════════════════════════════════════════
+-- CLIENTES_ECAC  (clientes do escritório contábil cadastrados para consulta
+-- de declarações de IR via e-CAC simulado — não é dimensão analítica, é
+-- tabela operacional da página "Consulta e-CAC" do dashboard)
+-- ══════════════════════════════════════════════════════════
+-- senha_simulada: credencial usada apenas contra o portal fictício em
+-- public/ecac_fake/ (nunca o eCAC/gov.br real) — nome deliberadamente
+-- explícito para nunca ser confundido com uma senha real do cliente.
+CREATE TABLE IF NOT EXISTS clientes_ecac (
+    id_cliente_ecac     UUID PRIMARY KEY,
+    id_cliente          UUID NOT NULL REFERENCES dim_cliente(id_cliente),
+    nome                VARCHAR(200) NOT NULL,
+    cpf                 VARCHAR(14) NOT NULL,
+    senha_simulada      VARCHAR(200) NOT NULL,
+    status_consulta     VARCHAR(20) NOT NULL DEFAULT 'nunca_executado'
+                            CHECK (status_consulta IN ('nunca_executado', 'processando', 'sucesso', 'erro')),
+    declaracoes         JSONB,
+    erro_mensagem       TEXT,
+    atualizado_em       TIMESTAMPTZ,
+    criado_em           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (id_cliente, cpf)
+);
+CREATE INDEX IF NOT EXISTS idx_clientes_ecac_cliente ON clientes_ecac (id_cliente);
+
+-- ══════════════════════════════════════════════════════════
 -- DIM_CANAL
 -- ══════════════════════════════════════════════════════════
 CREATE TABLE IF NOT EXISTS dim_canal (

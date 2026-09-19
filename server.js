@@ -20,6 +20,9 @@ app.use(authRouter);
 app.get("/page.html", requireSessaoPagina, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "page.html"));
 });
+app.get("/clientes_ecac.html", requireSessaoPagina, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "clientes_ecac.html"));
+});
 
 // server.js
 app.use(express.static("public")); // Isso faz o arquivo ser encontrado em http://localhost:3000/portal_fake.html

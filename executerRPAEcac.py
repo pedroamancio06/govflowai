@@ -11,19 +11,26 @@ não havendo proteção real por trás.
 
 Dependências: pip install playwright python-dotenv && playwright install chromium
 Requer o servidor Express rodando (node server.js) para servir public/ecac_fake/.
-Disparado automaticamente pela opção [2] do menu do webchat (robot/consultaEcac.js),
-mas pode rodar isolado via `python executerRPAEcac.py` para gravar o vídeo de demo.
+Disparado automaticamente pela opção [2] do menu do webchat OU pela página
+"Consulta e-CAC" do dashboard (ambas via robot/consultaEcac.js), mas pode
+rodar isolado via `python executerRPAEcac.py` para gravar o vídeo de demo.
+
+Uso: python executerRPAEcac.py [cpf] [senha] [arquivo_saida.json]
+Todos os argumentos são opcionais — sem eles, cai em ECAC_CPF/ECAC_SENHA do
+.env (fluxo original do webchat) e "declaracoes.json" como saída padrão.
 """
 
 import os
+import sys
 import json
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
 load_dotenv()
 
-CPF = os.getenv("ECAC_CPF")
-SENHA = os.getenv("ECAC_SENHA")
+CPF = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1] else os.getenv("ECAC_CPF")
+SENHA = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] else os.getenv("ECAC_SENHA")
+ARQUIVO_SAIDA = sys.argv[3] if len(sys.argv) > 3 and sys.argv[3] else "declaracoes.json"
 
 # ECAC_URL aponta para o portal fictício local — nunca para o eCAC real.
 # Respeita a porta em que o servidor Express está rodando (ver .env.example).
@@ -130,9 +137,9 @@ def main():
                 log(f"  -> {ano_texto}: {situacao_texto}")
 
             # 10. Salva em JSON
-            with open("declaracoes.json", "w", encoding="utf-8") as f:
+            with open(ARQUIVO_SAIDA, "w", encoding="utf-8") as f:
                 json.dump(declaracoes, f, ensure_ascii=False, indent=2)
-            log("Dados salvos em declaracoes.json")
+            log(f"Dados salvos em {ARQUIVO_SAIDA}")
 
         except Exception as e:
             log(f"ERRO durante a execução: {e}")

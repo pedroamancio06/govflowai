@@ -987,19 +987,54 @@
     font-family: 'Syne', sans-serif; font-size: 0.8rem;
   }
   .form-add-usuario input:focus { outline: none; border-color: var(--green-forest); }
+
+  /* ── MENU TOGGLE (canto superior esquerdo) ── */
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .menu-toggle-wrap { position: relative; }
+  .menu-dropdown {
+    display: none;
+    position: absolute; top: calc(100% + 10px); left: 0; z-index: 250;
+    background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.18); min-width: 270px; padding: 8px;
+  }
+  .menu-dropdown.aberto { display: block; }
+  .menu-dropdown-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 8px; text-decoration: none; color: var(--ink);
+  }
+  .menu-dropdown-item:hover { background: var(--green-mist); }
+  .menu-dropdown-item svg { width: 18px; height: 18px; color: var(--green-forest); flex-shrink: 0; }
+  .menu-dropdown-item-title { font-size: 0.82rem; font-weight: 700; }
+  .menu-dropdown-item-sub { font-size: 0.68rem; color: var(--ink-soft); }
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <header>
-  <div class="logo">
-    <div class="logo-mark">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+  <div class="header-left">
+    <div class="menu-toggle-wrap" id="menu-toggle-wrap">
+      <button class="icon-btn" id="menu-toggle-btn" title="Menu">
+        <i data-lucide="menu"></i>
+      </button>
+      <div class="menu-dropdown" id="menu-dropdown">
+        <a href="/clientes_ecac.html" class="menu-dropdown-item">
+          <i data-lucide="file-search"></i>
+          <div>
+            <div class="menu-dropdown-item-title">Consulta e-CAC</div>
+            <div class="menu-dropdown-item-sub">Clientes e declarações de IR</div>
+          </div>
+        </a>
+      </div>
     </div>
-    <div class="logo-text">
-      <span class="logo-title">GovFlow AI</span>
-      <span class="logo-sub">Automação Governamental</span>
+    <div class="logo">
+      <div class="logo-mark">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-title">GovFlow AI</span>
+        <span class="logo-sub">Automação Governamental</span>
+      </div>
     </div>
   </div>
   <div class="header-right">
@@ -1960,6 +1995,15 @@
       lista.appendChild(row);
     });
   }
+
+  document.getElementById('menu-toggle-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('menu-dropdown').classList.toggle('aberto');
+  });
+  document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('menu-toggle-wrap');
+    if (!wrap.contains(e.target)) document.getElementById('menu-dropdown').classList.remove('aberto');
+  });
 
   document.getElementById('config-btn').addEventListener('click', abrirConfigModal);
   document.getElementById('fechar-config-modal').addEventListener('click', fecharConfigModalFn);

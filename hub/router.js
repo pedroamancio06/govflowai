@@ -5,12 +5,13 @@ const fs = require("fs");
 
 const { getSession, resetSession } = require("./sessionStore");
 const { handleTexto, mensagensMenu } = require("./flowEngine");
-const { iniciarPipeline, confirmarEnvio, iniciarConsultaEcac } = require("./pipeline");
+const { iniciarPipeline, confirmarEnvio, iniciarConsultaEcac, iniciarConsultaEcacParaCliente } = require("./pipeline");
 const eventBus = require("./eventBus");
 const { requireSessaoApi } = require("../auth/middleware");
 const automacaoRepository = require("../db/repositories/automacaoRepository");
 const relatorioRepository = require("../db/repositories/relatorioRepository");
 const usuarioRepository = require("../db/repositories/usuarioRepository");
+const clienteEcacRepository = require("../db/repositories/clienteEcacRepository");
 
 const router = express.Router();
 
@@ -214,6 +215,46 @@ router.post("/portal/usuarios", requireSessaoApi, async (req, res) => {
 
   const usuario = await usuarioRepository.criar({ idCliente: req.clienteId, nome, email, papel: "membro" });
   res.status(201).json(usuario);
+});
+
+// Página "Consulta e-CAC" do dashboard: clientes do escritório cadastrados
+// para consulta de declarações de IR via e-CAC simulado.
+router.get("/portal/ecac/clientes", requireSessaoApi, async (req, res) => {
+  const clientes = await clienteEcacRepository.listarPorCliente(req.clienteId);
+  res.json({ itens: clientes });
+});
+
+router.post("/portal/ecac/clientes", requireSessaoApi, async (req, res) => {
+  const { nome, cpf, senha } = req.body || {};
+  if (!nome || !cpf || !senha) {
+    return res.status(400).json({ erro: "Nome, CPF e senha (simulada) são obrigatórios." });
+  }
+
+  const existente = await clienteEcacRepository.buscarPorCpf(req.clienteId, cpf);
+  if (existente) {
+    return res.status(409).json({ erro: "Já existe um cliente cadastrado com esse CPF." });
+  }
+
+  const clienteEcac = await clienteEcacRepository.criar({ idCliente: req.clienteId, nome, cpf, senha });
+  res.status(201).json(clienteEcac);
+});
+
+// Dispara (ou reprocessa) a consulta e-CAC simulada para um cliente já
+// cadastrado. Fire-and-forget: evolui via SSE no mesmo canal do usuário
+// logado, igual ao restante do pipeline.
+router.post("/portal/ecac/clientes/:id/consultar", requireSessaoApi, async (req, res) => {
+  const clienteEcac = await clienteEcacRepository.buscarPorId(req.params.id, req.clienteId);
+  if (!clienteEcac) {
+    return res.status(404).json({ erro: "Cliente não encontrado." });
+  }
+  if (clienteEcac.status_consulta === "processando") {
+    return res.status(409).json({ erro: "Já existe uma consulta em andamento para esse cliente." });
+  }
+
+  const usuarioId = req.claims && req.claims.usuarioId ? req.claims.usuarioId : `portal-${req.clienteId}`;
+  iniciarConsultaEcacParaCliente(clienteEcac, usuarioId).catch(() => {});
+
+  res.status(202).json({ ok: true });
 });
 
 // RF07-RF10: feedback proativo em tempo real via Server-Sent Events

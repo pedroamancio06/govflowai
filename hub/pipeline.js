@@ -6,6 +6,7 @@ const executarConsultaEcac = require("../robot/consultaEcac");
 const eventBus = require("./eventBus");
 const clienteRepository = require("../db/repositories/clienteRepository");
 const automacaoRepository = require("../db/repositories/automacaoRepository");
+const clienteEcacRepository = require("../db/repositories/clienteEcacRepository");
 const automacoesPendentes = require("./automacoesPendentes");
 const { resolverIdTempoHoje, resolverIdCanal, resolverServicoPorCodigo } = require("../db/repositories/dimensaoRepository");
 
@@ -180,6 +181,54 @@ async function iniciarConsultaEcac(session) {
   }
 }
 
+// Consulta e-CAC para um cliente cadastrado (página "Consulta e-CAC" do
+// dashboard — não confundir com iniciarConsultaEcac acima, que é o disparo
+// genérico do menu do webchat sem cliente associado). Usada tanto no
+// cadastro inicial quanto no botão "Reprocessar". Publica no MESMO canal SSE
+// do usuário logado (dashboard já escuta /hub/eventos/:usuarioId/stream),
+// com idClienteEcac no evento para a página atualizar só a linha certa.
+async function iniciarConsultaEcacParaCliente(clienteEcac, usuarioId) {
+  const publicar = (texto, tipo = "info", etapa, extras = {}) =>
+    eventBus.publish(usuarioId, { texto, tipo, etapa, idClienteEcac: clienteEcac.id_cliente_ecac, ...extras });
+
+  await clienteEcacRepository.atualizarStatus(clienteEcac.id_cliente_ecac, { status: "processando" });
+  publicar(`🤖 Consultando e-CAC (simulação) para ${clienteEcac.nome}...`, "info", "ecac_cliente_iniciado");
+
+  const logger = new Logger((logObj) => publicar(logObj.message, "info", "ecac_cliente_progresso"));
+
+  try {
+    const resultado = await executarConsultaEcac(logger, {
+      cpf: clienteEcac.cpf,
+      senha: clienteEcac.senha_simulada,
+    });
+
+    if (resultado.success) {
+      await clienteEcacRepository.atualizarStatus(clienteEcac.id_cliente_ecac, {
+        status: "sucesso",
+        declaracoes: resultado.declaracoes,
+      });
+      publicar(
+        `✅ Consulta concluída para ${clienteEcac.nome}: ${resultado.declaracoes.length} declaração(ões).`,
+        "sucesso",
+        "ecac_cliente_concluido",
+        { declaracoes: resultado.declaracoes }
+      );
+    } else {
+      await clienteEcacRepository.atualizarStatus(clienteEcac.id_cliente_ecac, {
+        status: "erro",
+        erroMensagem: resultado.error,
+      });
+      publicar(`⚠️ Erro na consulta para ${clienteEcac.nome}: ${resultado.error}`, "erro", "ecac_cliente_erro");
+    }
+  } catch (error) {
+    await clienteEcacRepository.atualizarStatus(clienteEcac.id_cliente_ecac, {
+      status: "erro",
+      erroMensagem: error.message,
+    });
+    publicar(`⚠️ Falha inesperada na consulta para ${clienteEcac.nome}: ${error.message}`, "erro", "ecac_cliente_erro");
+  }
+}
+
 // RF07-RF10: dispara o processamento em segundo plano, publica cada etapa
 // como evento proativo (SSE) e persiste o ciclo de vida na tabela fato
 // (docs/TECH-SPEC-MVP.md §3).
@@ -325,4 +374,4 @@ async function confirmarEnvio(idProcessamento, idClienteEsperado) {
   });
 }
 
-module.exports = { iniciarPipeline, confirmarEnvio, iniciarConsultaEcac };
+module.exports = { iniciarPipeline, confirmarEnvio, iniciarConsultaEcac, iniciarConsultaEcacParaCliente };
