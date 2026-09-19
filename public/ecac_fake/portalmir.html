@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<title>Portal MIR — Simulação</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; margin: 0; background: #f0f0f0; }
+  .topbar { background: #1c1c1c; color: #fff; font-size: 0.75rem; padding: 6px 16px; text-align: right; }
+  .header { background: #1351b4; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .selo { background: #ffcd07; color: #1c1c1c; font-size: 0.65rem; padding: 3px 10px; border-radius: 100px; }
+  main { max-width: 800px; margin: 30px auto; padding: 0 16px; }
+  h1 { font-size: 1.1rem; color: #333; margin-bottom: 20px; }
+  .declaracao-ano { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+  .declaracao-ano button { background: #1351b4; color: #fff; border: none; padding: 8px 20px; border-radius: 100px; font-weight: bold; cursor: pointer; }
+  .situacao { font-size: 0.85rem; font-weight: bold; padding: 4px 12px; border-radius: 100px; }
+  .situacao.regular { background: #dff0d8; color: #3c763d; }
+  .situacao.pendente { background: #fcf3cf; color: #9a7d0a; }
+</style>
+</head>
+<body>
+  <div class="topbar">Simulação acadêmica — GovFlow AI (TCC/Enterprise Challenge FIAP)</div>
+  <div class="header">
+    <span>Portal MIR (simulado)</span>
+    <span class="selo">AMBIENTE FICTÍCIO</span>
+  </div>
+
+  <main>
+    <h1>Minhas Declarações de Imposto de Renda</h1>
+
+    <div class="declaracao-ano">
+      <button>2025</button>
+      <div class="situacao regular">Regular</div>
+    </div>
+    <div class="declaracao-ano">
+      <button>2024</button>
+      <div class="situacao regular">Regular</div>
+    </div>
+    <div class="declaracao-ano">
+      <button>2023</button>
+      <div class="situacao pendente">Pendente de Regularização</div>
+    </div>
+  </main>
+</body>
+</html>

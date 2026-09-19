@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<title>e-CAC — Página Inicial (Simulação)</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; margin: 0; background: #f0f0f0; }
+  .topbar { background: #1c1c1c; color: #fff; font-size: 0.75rem; padding: 6px 16px; text-align: right; }
+  .header { background: #1351b4; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .header .logo { font-weight: bold; }
+  .selo { background: #ffcd07; color: #1c1c1c; font-size: 0.65rem; padding: 3px 10px; border-radius: 100px; }
+  main { max-width: 900px; margin: 30px auto; padding: 0 16px; }
+  h1 { font-size: 1.1rem; color: #333; margin-bottom: 20px; }
+  .servicos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .servico-card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 20px; text-decoration: none; color: #1351b4; font-weight: bold; text-align: center; display: block; }
+  .servico-card:hover { border-color: #1351b4; background: #eaf2fb; }
+  .servico-card.desabilitado { color: #999; cursor: default; pointer-events: none; }
+</style>
+</head>
+<body>
+  <div class="topbar">Simulação acadêmica — GovFlow AI (TCC/Enterprise Challenge FIAP)</div>
+  <div class="header">
+    <span class="logo">e-CAC (simulado)</span>
+    <span class="selo">AMBIENTE FICTÍCIO</span>
+  </div>
+
+  <main>
+    <h1>Bem-vindo(a) ao Centro Virtual de Atendimento (simulação)</h1>
+    <div class="servicos">
+      <a href="portalmir.html" target="_blank" class="servico-card">Meu Imposto de Renda</a>
+      <span class="servico-card desabilitado">Certidões (indisponível na simulação)</span>
+      <span class="servico-card desabilitado">Parcelamentos (indisponível na simulação)</span>
+    </div>
+  </main>
+</body>
+</html>

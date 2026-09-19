@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<title>gov.br — Simulação Acadêmica</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; margin: 0; background: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; }
+  .box { width: 360px; padding: 32px; }
+  .selo-simulacao { display: inline-block; background: #d4a017; color: #fff; font-size: 0.65rem; padding: 3px 10px; border-radius: 100px; margin-bottom: 18px; }
+  .logo { color: #1351b4; font-weight: bold; font-size: 1.3rem; margin-bottom: 24px; }
+  label { font-size: 0.78rem; color: #333; display: block; margin-bottom: 8px; }
+  input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; margin-bottom: 16px; }
+  button { width: 100%; background: #1351b4; color: #fff; border: none; padding: 12px; border-radius: 100px; font-weight: bold; cursor: pointer; font-size: 0.88rem; }
+  button:hover { background: #0d3f8f; }
+  #password-wrap { display: none; }
+
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+  .overlay.aberto { display: flex; }
+  .box-2fa { background: #fff; border-radius: 6px; padding: 28px; width: 320px; text-align: center; }
+  .box-2fa h3 { font-size: 0.95rem; margin-bottom: 10px; }
+  .box-2fa p { font-size: 0.78rem; color: #666; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <span class="selo-simulacao">AMBIENTE FICTÍCIO — SEM CONEXÃO COM O GOV.BR REAL</span>
+    <div class="logo">gov.br (simulado)</div>
+
+    <div id="cpf-wrap">
+      <label>Digite seu CPF</label>
+      <input type="text" id="accountId" placeholder="000.000.000-00" />
+      <button id="enter-account-id">Continuar</button>
+    </div>
+
+    <div id="password-wrap">
+      <label>Digite sua senha</label>
+      <input type="password" id="password" />
+      <button id="submit-button">Entrar</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay-2fa">
+    <div class="box-2fa">
+      <h3>Confirmação em duas etapas (simulada)</h3>
+      <p>Em um ambiente real, um código seria enviado por SMS ou pelo app gov.br. Aqui, apenas confirme para simular a resolução manual.</p>
+      <button id="confirmar-2fa">Confirmar</button>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('enter-account-id').addEventListener('click', () => {
+      document.getElementById('cpf-wrap').style.display = 'none';
+      document.getElementById('password-wrap').style.display = 'block';
+    });
+
+    document.getElementById('submit-button').addEventListener('click', () => {
+      document.getElementById('overlay-2fa').classList.add('aberto');
+    });
+
+    document.getElementById('confirmar-2fa').addEventListener('click', () => {
+      window.location.href = 'home.html';
+    });
+  </script>
+</body>
+</html>

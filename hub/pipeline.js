@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const fs = require("fs/promises");
 const Logger = require("../services/logger");
 const executarRegistroEmpresa = require("../robot/registroEmpresa");
+const executarConsultaEcac = require("../robot/consultaEcac");
 const eventBus = require("./eventBus");
 const clienteRepository = require("../db/repositories/clienteRepository");
 const automacaoRepository = require("../db/repositories/automacaoRepository");
@@ -107,6 +108,75 @@ async function executarEtapaRpa({ idProcessamento, usuarioId, dados, tempoOcrMs,
       "erro",
       "erro"
     );
+  }
+}
+
+// Consulta e-CAC (fluxo sem documento/OCR): diferente do redesim, aqui o
+// "robô" é o script Python/Playwright (executerRPAEcac.py, via
+// robot/consultaEcac.js) que abre um navegador visível e pausa em captcha/2FA
+// simulados — por isso é disparado direto ao escolher o serviço no menu do
+// webchat, sem esperar upload de arquivo. Grava na mesma fato_processamento_automacoes
+// (dim_servico_gov 'consulta_ecac', seed em db/seed.js) para aparecer no
+// Status Board e no ROI igual qualquer outra automação.
+async function iniciarConsultaEcac(session) {
+  const idProcessamento = crypto.randomUUID();
+  session.idProcessamento = idProcessamento;
+  const usuarioId = session.usuarioId;
+  const publicar = (texto, tipo = "info", etapa, extras = {}) =>
+    eventBus.publish(usuarioId, { idProcessamento, texto, tipo, etapa, ...extras });
+
+  try {
+    const [cliente, idTempo, idCanal, servico] = await Promise.all([
+      resolverClienteDoChat(usuarioId),
+      resolverIdTempoHoje(),
+      resolverIdCanal("webchat"),
+      resolverServicoPorCodigo("consulta_ecac"),
+    ]);
+
+    await automacaoRepository.criar({
+      idProcessamento,
+      idTempo,
+      idCliente: cliente.id_cliente,
+      idCanal,
+      idServicoGov: servico.id_servico_gov,
+      tempoManualEstimadoSeg: servico.tempo_manual_estimado_padrao_seg,
+    });
+
+    publicar("🤖 Robô acessando o portal e-CAC (simulação local)...", "info", "rpa_iniciado");
+    const inicio = Date.now();
+    const logger = new Logger((logObj) => publicar(logObj.message, "info", "rpa_progresso"));
+
+    const resultado = await executarConsultaEcac(logger);
+    const tempoRpaMs = Date.now() - inicio;
+    const tempoProcessamentoTotalSeg = Math.round(tempoRpaMs / 1000);
+
+    if (resultado.success) {
+      session.estado = "concluido";
+      await automacaoRepository.atualizar(idProcessamento, {
+        status: "sucesso",
+        tentativasRpa: 1,
+        tempoRpaMs,
+        tempoProcessamentoTotalSeg,
+      });
+      publicar(
+        `✅ Consulta concluída! ${resultado.declaracoes.length} declaração(ões) encontrada(s).`,
+        "sucesso",
+        "concluido",
+        { declaracoes: resultado.declaracoes }
+      );
+    } else {
+      session.estado = "aguardando_servico";
+      await automacaoRepository.atualizar(idProcessamento, {
+        status: "erro",
+        tentativasRpa: 1,
+        tempoRpaMs,
+        tempoProcessamentoTotalSeg,
+      });
+      publicar(`⚠️ Erro na consulta ao e-CAC: ${resultado.error}`, "erro", "erro");
+    }
+  } catch (error) {
+    session.estado = "aguardando_servico";
+    publicar(`⚠️ Falha inesperada na consulta e-CAC: ${error.message}`, "erro", "erro");
   }
 }
 
@@ -255,4 +325,4 @@ async function confirmarEnvio(idProcessamento, idClienteEsperado) {
   });
 }
 
-module.exports = { iniciarPipeline, confirmarEnvio };
+module.exports = { iniciarPipeline, confirmarEnvio, iniciarConsultaEcac };

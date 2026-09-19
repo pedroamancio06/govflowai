@@ -2,8 +2,8 @@
 // aguardando_servico -> aguardando_documento -> processando -> concluido
 
 const SERVICOS = {
-  1: { codigo: "abertura_redesim", nome: "Abertura de Empresa (Redesim)", disponivel: true },
-  2: { codigo: "consulta_ecac", nome: "Consulta e-CAC", disponivel: false },
+  1: { codigo: "abertura_redesim", nome: "Abertura de Empresa (Redesim)", disponivel: true, exigeDocumento: true },
+  2: { codigo: "consulta_ecac", nome: "Consulta e-CAC", disponivel: true, exigeDocumento: false },
 };
 
 function mensagensMenu() {
@@ -12,7 +12,7 @@ function mensagensMenu() {
       "Olá! 👋 Sou o assistente do GovFlow AI.",
       "Qual serviço deseja realizar hoje?",
       "[1] Abertura de Empresa (Redesim)",
-      "[2] Consulta e-CAC (em breve)",
+      "[2] Consulta e-CAC",
     ].join("\n"),
   ];
 }
@@ -33,10 +33,20 @@ function handleTexto(session, textoRecebido) {
       return [`O serviço "${escolha.nome}" ainda não está disponível nesta versão. Em breve! 🚧`, ...mensagensMenu()];
     }
 
-    session.estado = "aguardando_documento";
     session.servico = escolha.codigo;
     session.idProcessamento = null;
 
+    if (!escolha.exigeDocumento) {
+      // Consulta e-CAC: sem upload de documento — dispara o robô direto
+      // (hub/router.js observa esse estado e chama iniciarConsultaEcac).
+      session.estado = "processando";
+      return [
+        `Perfeito! Vamos iniciar: ${escolha.nome}.`,
+        "🤖 Vou abrir o navegador para a simulação do eCAC. Acompanhe aqui as etapas — em alguns pontos (captcha/2FA simulados) será preciso confirmar manualmente no terminal do servidor.",
+      ];
+    }
+
+    session.estado = "aguardando_documento";
     return [
       `Perfeito! Vamos iniciar: ${escolha.nome}.`,
       "📎 Envie o PDF ou foto do Contrato Social (PDF, JPG ou PNG, até 15MB) para eu começar.",

@@ -19,3 +19,8 @@ ocr-service/test-fixtures/*.png
 # Arquivos de lock temporários do Word/PowerPoint
 ~$*.docx
 ~$*.pptx
+
+# Saída do RPA de simulação do eCAC (executerRPAEcac.py)
+declaracoes.json
+erro_screenshot.png
+__pycache__/

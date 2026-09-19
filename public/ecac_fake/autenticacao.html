@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<title>e-CAC — Simulação Acadêmica</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; margin: 0; background: #f0f0f0; }
+  .topbar { background: #1c1c1c; color: #fff; font-size: 0.75rem; padding: 6px 16px; display: flex; justify-content: flex-end; gap: 18px; }
+  .topbar span { opacity: 0.85; }
+  .brasil-bar { background: #fff; border-bottom: 1px solid #ddd; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .brasil-bar .brand { display: flex; align-items: center; gap: 8px; font-weight: bold; color: #1351b4; }
+  .brasil-bar nav { display: flex; gap: 18px; font-size: 0.8rem; color: #333; }
+  .selo { background: #ffcd07; font-size: 0.65rem; padding: 4px 10px; border-radius: 3px; margin-left: 10px; }
+  main { max-width: 1100px; margin: 30px auto; padding: 0 16px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; }
+  .card { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 24px; }
+  .ecac-logo { color: #1351b4; font-size: 1.6rem; font-weight: bold; margin-bottom: 4px; }
+  .ecac-logo small { display: block; font-size: 0.65rem; color: #555; font-weight: normal; letter-spacing: 1px; }
+  .restricoes { font-size: 0.8rem; color: #333; line-height: 1.6; }
+  .restricoes li { margin-bottom: 4px; }
+  .aviso { background: #eaf2fb; border: 1px solid #cfe0f5; font-size: 0.78rem; padding: 12px; margin-top: 16px; color: #333; }
+  .govbr-box h2 { font-size: 0.95rem; margin-bottom: 16px; color: #333; }
+  .govbr-box p { font-size: 0.78rem; color: #555; margin-bottom: 20px; }
+  #btn-entrar-govbr { width: 100%; background: #fff; border: 2px solid #1351b4; color: #1351b4; padding: 12px; border-radius: 100px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+  #btn-entrar-govbr:hover { background: #eaf2fb; }
+  .selo-simulacao { display: inline-block; background: #d4a017; color: #fff; font-size: 0.65rem; padding: 3px 10px; border-radius: 100px; margin-bottom: 14px; }
+
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+  .overlay.aberto { display: flex; }
+  .captcha-box { background: #fff; border-radius: 6px; padding: 28px; width: 320px; text-align: center; }
+  .captcha-box h3 { font-size: 0.95rem; margin-bottom: 6px; }
+  .captcha-box p { font-size: 0.75rem; color: #666; margin-bottom: 18px; }
+  .captcha-checkline { display: flex; align-items: center; gap: 10px; border: 1px solid #d3d3d3; border-radius: 4px; padding: 14px; margin-bottom: 18px; text-align: left; }
+  .captcha-checkline input { width: 20px; height: 20px; }
+  #captcha-verificar { width: 100%; background: #1351b4; color: #fff; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: not-allowed; opacity: 0.5; }
+  #captcha-verificar.pronto { cursor: pointer; opacity: 1; }
+</style>
+</head>
+<body>
+  <div class="topbar"><span>Simulação acadêmica — GovFlow AI (TCC/Enterprise Challenge FIAP)</span></div>
+  <div class="brasil-bar">
+    <div class="brand">🇧🇷 BRASIL <span class="selo">SIMULAÇÃO</span></div>
+    <nav><span>Simplifique!</span><span>Comunica BR</span><span>Participe</span><span>Acesso à informação</span><span>Legislação</span><span>Canais</span></nav>
+  </div>
+
+  <main>
+    <div class="card">
+      <span class="selo-simulacao">AMBIENTE FICTÍCIO — SEM CONEXÃO COM O GOV.BR REAL</span>
+      <div class="ecac-logo">e-CAC<small>CENTRO VIRTUAL DE ATENDIMENTO (SIMULADO)</small></div>
+      <ul class="restricoes">
+        <li>Este é um portal fictício criado para fins de demonstração acadêmica.</li>
+        <li>Nenhum dado inserido aqui é enviado a qualquer sistema real do governo.</li>
+        <li>O fluxo de captcha e 2FA abaixo é simulado — a resolução manual continua obrigatória por design.</li>
+      </ul>
+      <div class="aviso">
+        <strong>ATENÇÃO:</strong> este ambiente reproduz apenas a experiência visual do e-CAC real para fins de vídeo demonstrativo. Todas as URLs e dados são locais e fictícios.
+      </div>
+    </div>
+
+    <div class="card govbr-box">
+      <h2>ACESSO GOV.BR (simulado)</h2>
+      <p>O GovBR é um serviço online de identificação e autenticação digital do cidadão — aqui, uma simulação local do mesmo fluxo.</p>
+      <button id="btn-entrar-govbr">Entrar com gov.br</button>
+    </div>
+  </main>
+
+  <div class="overlay" id="captcha-overlay">
+    <div class="captcha-box">
+      <h3>Verificação de segurança (simulada)</h3>
+      <p>Confirme que você é uma pessoa antes de continuar — resolução sempre manual, nunca automatizada.</p>
+      <label class="captcha-checkline">
+        <input type="checkbox" id="captcha-checkbox" />
+        Não sou um robô
+      </label>
+      <button id="captcha-verificar" disabled>Verificar</button>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById('captcha-overlay');
+    const checkbox = document.getElementById('captcha-checkbox');
+    const btnVerificar = document.getElementById('captcha-verificar');
+
+    document.getElementById('btn-entrar-govbr').addEventListener('click', () => {
+      overlay.classList.add('aberto');
+    });
+
+    checkbox.addEventListener('change', () => {
+      btnVerificar.disabled = !checkbox.checked;
+      btnVerificar.classList.toggle('pronto', checkbox.checked);
+    });
+
+    btnVerificar.addEventListener('click', () => {
+      if (!checkbox.checked) return;
+      window.location.href = 'sso-login.html';
+    });
+  </script>
+</body>
+</html>

@@ -18,7 +18,7 @@ Documentação de produto para alinhar o projeto ao **Enterprise Challenge Claro
 | Spec | Status |
 |---|---|
 | [04 — Motor de OCR e NLP](specs/04-motor-ocr-nlp.md) | **Implementado** — microserviço Python/FastAPI real (`ocr-service/`, Tesseract + OpenCV + Regex), consumido por `hub/pipeline.js`. Extração heurística por regex, validada contra documento de referência — ver limitações em [ocr-service/README.md](../ocr-service/README.md) |
-| [05 — Motor de Automação RPA](specs/05-motor-rpa.md) | PoC funcional contra portal fake — `portal_fake.html` ganhou JS mínimo (login navega, sócios geram linhas) para o robô conseguir completar o fluxo |
+| [05 — Motor de Automação RPA](specs/05-motor-rpa.md) | PoC funcional contra portal fake — `portal_fake.html` ganhou JS mínimo (login navega, sócios geram linhas) para o robô conseguir completar o fluxo. Segundo robô adicionado: **Consulta e-CAC** (Python/Playwright, `executerRPAEcac.py`), contra réplica fictícia em `public/ecac_fake/` — nunca acessa o eCAC/gov.br real, disparado via webchat opção `[2]` |
 | [06 — Banco de Dados Relacional & Data Warehouse](specs/06-banco-dados-dw.md) | **Implementado** — Star Schema real (`db/`) rodando em Postgres na nuvem (Neon, `sa-east-1`), com fallback automático para PGlite (Postgres/WASM embutido) em dev local sem `DATABASE_URL`; `auth/` e `hub/` já gravam nele |
 
 ### Camada 3 — Painel de Gestão / Dashboard

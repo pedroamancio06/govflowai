@@ -5,7 +5,7 @@ const fs = require("fs");
 
 const { getSession, resetSession } = require("./sessionStore");
 const { handleTexto, mensagensMenu } = require("./flowEngine");
-const { iniciarPipeline, confirmarEnvio } = require("./pipeline");
+const { iniciarPipeline, confirmarEnvio, iniciarConsultaEcac } = require("./pipeline");
 const eventBus = require("./eventBus");
 const { requireSessaoApi } = require("../auth/middleware");
 const automacaoRepository = require("../db/repositories/automacaoRepository");
@@ -56,6 +56,18 @@ router.post("/mensagens", (req, res) => {
 
   const session = getSession(usuarioId);
   const mensagens = handleTexto(session, conteudo);
+
+  // Consulta e-CAC não passa pelo upload de documento (RF01-RF03 acima) —
+  // handleTexto já deixou o estado em "processando" ao escolher o serviço,
+  // então dispara o robô aqui (fire-and-forget, evolui via SSE) igual o
+  // upload dispara iniciarPipeline em POST /arquivos.
+  if (session.servico === "consulta_ecac" && session.estado === "processando" && !session.consultaEcacEmAndamento) {
+    session.consultaEcacEmAndamento = true;
+    iniciarConsultaEcac(session).finally(() => {
+      session.consultaEcacEmAndamento = false;
+    });
+  }
+
   res.json({ mensagens, estado: session.estado });
 });
 

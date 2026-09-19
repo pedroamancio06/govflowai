@@ -185,7 +185,7 @@
     wrap.className = 'quick-replies';
     ['1', '2'].forEach(opcao => {
       const btn = document.createElement('button');
-      btn.textContent = opcao === '1' ? '1 · Abertura Redesim' : '2 · Consulta e-CAC';
+      btn.textContent = opcao === '1' ? '1 · Abertura Redesim' : '2 · Consulta e-CAC (simulação)';
       btn.onclick = () => enviarTexto(opcao);
       wrap.appendChild(btn);
     });

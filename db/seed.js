@@ -24,7 +24,8 @@ async function seed() {
   // para o cálculo de ROI (docs/TECH-SPEC-MVP.md §1.1), a validar com dados reais no piloto.
   await db.query(`
     INSERT INTO dim_servico_gov (codigo, nome_servico, orgao_responsavel, tempo_manual_estimado_padrao_seg) VALUES
-      ('abertura_redesim', 'Abertura de Empresa (Redesim)', 'Junta Comercial / Redesim', 2400)
+      ('abertura_redesim', 'Abertura de Empresa (Redesim)', 'Junta Comercial / Redesim', 2400),
+      ('consulta_ecac', 'Consulta e-CAC (Declarações de IR)', 'Receita Federal', 900)
     ON CONFLICT (codigo) DO NOTHING;
   `);
 }
