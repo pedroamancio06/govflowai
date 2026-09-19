@@ -4,96 +4,129 @@
 Estrutura calibrada pelo peso de cada critério da rubrica (40 pts totais): Representação (10),
 Requisitos/Funcionalidades (10), Implementação Técnica (15 — a maior fatia), Apresentação do Time (5).
 Por isso a demonstração técnica ocupa a maior parte do tempo, com **requests reais de gravação e leitura
-no banco de dados em nuvem** — não é opcional, é item explícito da rubrica.
+no banco de dados em nuvem** — não é opcional, é item explícito da rubrica — e agora também mostra os
+**dois robôs de RPA** do projeto (Redesim e Consulta e-CAC).
 
 Sugestão de gravação: tela dividida ou alternada entre slides, navegador, terminal e o painel do Neon.
-OBS Studio, Loom ou a gravação nativa do Windows (Win+Alt+R) resolvem.
+OBS Studio, Loom ou a gravação nativa do Windows (Win+Alt+R) resolvem. Os slides atualizados estão em
+`GovFlow-AI-Apresentacao-EC.pptx`/`.pdf` (11 slides, com o tempo de cada um já marcado no canto superior
+direito).
 
 ---
 
-## 0:00 – 0:40 — Abertura (Representação, critério A)
+## 0:00 – 0:35 — Abertura (Representação, critério A)
+**[Slide 1 → Slide 2]**
 > "Olá! Somos o time do GovFlow AI — uma automação inteligente de processos governamentais para
 > escritórios de contabilidade. Contadores como o Roberto, nosso persona, perdem boa parte do tempo
 > útil do escritório em trabalho manual: triagem de documentos, redigitação de dados, protocolo em
-> portais como o Redesim. O GovFlow AI transforma esse fluxo manual de ~40 minutos em um processo
-> conversacional automatizado de poucos minutos."
+> portais como o Redesim e o e-CAC. O GovFlow AI transforma esse fluxo manual de ~40 minutos em um
+> processo conversacional automatizado de poucos minutos."
 
-## 0:40 – 1:20 — Alinhamento de mercado (Representação, critério A)
+## 0:35 – 1:10 — Alinhamento de mercado (Representação, critério A)
+**[Slide 3]**
 > "Essa solução segue a mesma direção de mercado apresentada no nosso vídeo-pitch do Startup One:
 > modelo SaaS Freemium, R$299/mês no plano Pro, com CAC de R$250 e LTV projetado de quase R$4.000 —
 > uma relação LTV sobre CAC de quase 16 vezes. O breakeven operacional é projetado para o terceiro mês
-> de operação. [Detalhes completos na documentação financeira anexa.]"
+> de operação. Detalhes completos na documentação financeira anexa."
 
-## 1:20 – 2:20 — Funcionalidades essenciais e experiência do usuário (critério B)
-**[Trocar para o navegador — demo rápida do fluxo do usuário]**
-> "Na prática: o contador acessa o portal, faz login único, e envia um documento — pode ser pelo
-> webchat ou direto pelo painel. A inteligência artificial lê o documento, mostra os dados extraídos
-> na tela, e só depois de o usuário revisar e confirmar é que o robô é acionado contra o portal do
-> governo. Essa pausa para confirmação humana é proposital: acionar um robô contra um portal
-> governamental é uma ação real, de baixo custo de reverter, então o sistema nunca faz isso sozinho."
+## 1:10 – 1:50 — Funcionalidades essenciais (critério B)
+**[Slide 4]**
+> "Na prática, seis coisas já funcionam de ponta a ponta: login único validado contra o banco de dados,
+> com dono e membros por escritório; upload com OCR real, que lê CNPJ, Razão Social e sócios direto do
+> documento; confirmação humana antes de qualquer robô agir; o protocolo gerado aparecendo na própria
+> tela do portal; um histórico completo com CNPJ e Razão Social de cada automação; e um segundo robô,
+> para consulta de declarações no e-CAC, com gestão completa dos clientes do escritório. Vamos ver tudo
+> isso funcionando agora."
 
-## 2:20 – 5:50 — Implementação Técnica (critério C — maior peso, 3min30)
-Esta é a seção mais importante da rubrica. Sequência sugerida:
+## 1:50 – 2:20 — Arquitetura (critério C)
+**[Slide 5]**
+> "A arquitetura é dividida em 3 camadas: o Hub de Convergência no front-end — webchat, portal web e o
+> painel de clientes do e-CAC — a camada de Aplicação no back-end, com o motor de OCR em Python e dois
+> motores de RPA, um em Node.js e outro em Python, e o banco de dados analítico, hospedado em nuvem."
 
-**(a) Arquitetura — 30s**
-> "A arquitetura é dividida em 3 camadas: o Hub de Convergência (front-end — webchat e portal web),
-> a camada de Aplicação (back-end — motor de OCR em Python e motor de RPA em Node.js), e o banco de
-> dados analítico, hospedado em nuvem."
-- Mostrar o slide do diagrama de arquitetura (`docs/apresentacao/GovFlow-AI-Apresentacao.pdf`).
+## 2:20 – 2:45 — Stack tecnológico (critério C)
+**[Slide 6]**
+> "Do lado do front-end é HTML, CSS e JavaScript real, consumindo eventos em tempo real via
+> Server-Sent Events. Do lado do back-end, Node.js com Express orquestra o fluxo e a autenticação; um
+> microserviço Python com FastAPI roda o OCR de verdade — Tesseract mais OpenCV; e dois robôs de RPA
+> distintos, um em Puppeteer para o Redesim, outro em Playwright para o e-CAC."
+- Mostrar rapidamente o VS Code aberto: `server.js`, `hub/pipeline.js`, `ocr-service/main.py`,
+  `robot/registroEmpresa.js`, `executerRPAEcac.py`.
 
-**(b) Front-end e Back-end reais — 40s**
-> "Do lado do front-end, é HTML, CSS e JavaScript real, consumindo eventos em tempo real via
-> Server-Sent Events — sem simulação. Do lado do back-end, Node.js com Express cuida do fluxo
-> conversacional, autenticação e orquestração; um microserviço Python com FastAPI roda o OCR de
-> verdade — Tesseract mais OpenCV para pré-processamento de imagem."
-- Mostrar rapidamente o VS Code aberto: `server.js`, `hub/pipeline.js`, `ocr-service/main.py`.
+## 2:45 – 3:55 — Interação técnica com a nuvem (critério C — o ponto mais importante da rubrica)
+**[Slide 7]**
 
-**(c) Demonstração ao vivo — upload e OCR real — 40s**
+**(a) Demonstração ao vivo — upload e OCR real — 30s**
 - Subir um documento real no painel, mostrar o console de eventos reagindo em tempo real e o card
   "Dados Extraídos" populando com CNPJ, Razão Social, Sócios — dados lidos de verdade do documento.
 
-**(d) Interação técnica com a nuvem — REQUEST DE GRAVAÇÃO — 40s**
+**(b) REQUEST DE GRAVAÇÃO — 40s**
 > "Agora o ponto mais importante: aqui está o painel do Neon, nosso provedor de banco de dados
-> PostgreSQL em nuvem. Antes do envio, a tabela de automações está assim [mostrar contagem/última
-> linha]. Vou confirmar o envio no sistema..." **[clicar "Enviar ao Gov.br"]** "...e agora, de volta
-> no Neon, atualizando a tabela: aqui está a linha nova, gravada em tempo real, com o protocolo que
-> o robô acabou de gerar."
-- Usar a aba **Tables** do Neon (ou o **SQL Editor**), mostrando a tabela `fato_processamento_automacoes`
-  antes e depois do clique.
+> PostgreSQL em nuvem. Antes do envio, a linha desta automação está assim [mostrar status
+> 'aguardando_confirmação', já com CNPJ e Razão Social preenchidos]. Vou confirmar o envio no
+> sistema..." **[clicar "Enviar ao Gov.br"]** "...e agora, de volta no Neon: a mesma linha atualizada
+> em tempo real, com o protocolo que o robô acabou de gerar — o mesmo número que aparece na tela do
+> portal."
+- Usar a aba **Tables** do Neon (ou o **SQL Editor**), mostrando a linha antes e depois do clique.
 
-**(e) Interação técnica com a nuvem — REQUEST DE LEITURA — 30s**
+**(c) REQUEST DE LEITURA — 30s**
 > "E para provar que não é só escrita: aqui no SQL Editor do Neon, vou rodar uma consulta que junta
 > a tabela fato com as dimensões de cliente, canal e status..." **[rodar o SELECT com JOIN]**
 > "...e recupero exatamente os dados da automação que acabamos de processar, incluindo o tempo
 > economizado, calculado automaticamente pelo próprio banco."
-- Query sugerida (ver seção "Query de apoio" abaixo).
+- Query sugerida (ver seção "Queries de apoio" abaixo).
 
-**(f) Robô em ação — 30s**
-- Cortar para o console mostrando o robô preenchendo o formulário (CNPJ, Razão Social, sócios) até o
-  protocolo final aparecer.
+## 3:55 – 4:35 — Segundo robô: Consulta e-CAC (critério B + C)
+**[Slide 8]**
+> "Além da Redesim, o GovFlow AI tem um segundo robô: a Consulta e-CAC. No painel, o contador cadastra
+> os clientes do próprio escritório, cada um com seu CPF e senha — aqui, sempre contra um ambiente
+> simulado, nunca o e-CAC real. Ao clicar em 'Consultar', o robô em Python e Playwright loga como
+> aquele cliente específico e extrai a situação da declaração."
+- **[Demonstração ao vivo]** Cadastrar (ou reutilizar) dois clientes com CPFs de paridades diferentes,
+  disparar a consulta de cada um.
+> "Repare: o Cliente A, com CPF terminado em dígito par, volta com tudo regular. Já o Cliente B, com
+> CPF terminado em dígito ímpar, volta com uma pendência em 2024. Dois clientes diferentes, dois
+> resultados diferentes — prova de que o robô está lendo o que está na tela, não repetindo um valor
+> fixo."
+- Opcional, se sobrar tempo: mostrar a mesma linha aparecendo/atualizando no Neon (mais um request de
+  gravação, desta vez do segundo robô).
 
-**(g) Fechamento técnico — 20s**
-> "Esse é o pipeline completo: front-end e back-end reais, processando um documento de verdade,
-> gravando e consultando dados de um banco PostgreSQL hospedado na nuvem — sem nenhuma simulação."
+## 4:35 – 5:35 — Robôs em ação (critério C)
+**[Slide 9]**
+- Cortar para o console mostrando o robô da Redesim preenchendo o formulário (CNPJ, Razão Social,
+  sócios) até o protocolo final aparecer na própria tela do portal fictício.
+- Em seguida, cortar rapidamente para o console do robô do e-CAC completando o login simulado e
+  extraindo a declaração.
+> "Esse é o pipeline completo dos dois robôs: front-end e back-end reais, processando documentos e
+> credenciais de verdade, gravando e consultando dados de um banco PostgreSQL hospedado na nuvem —
+> sem nenhuma simulação no resultado final."
 
-## 5:50 – 6:40 — Apresentação do Time (critério D)
-> "Esse projeto foi desenvolvido por [nome completo — RM], [nome completo — RM], [nome completo — RM]."
+## 5:35 – 6:15 — Apresentação do Time (critério D)
+**[Slide 10]**
+> "Esse projeto foi desenvolvido por Pedro Henrique Amancio Lopes, RM551682, e Felipe Vazamim,
+> RM97856."
 - Mostrar o slide com foto + nome completo + RM de cada integrante.
-> "[RESPOSTA SOBRE O NEXT 2026 — usar a frase exata definida pelo grupo]"
 
-## 6:40 – 7:00 — Encerramento
-> "O GovFlow AI já tem cerca de 80% do MVP funcional rodando de ponta a ponta, com banco de dados em
-> nuvem, IA e automação reais. Obrigado!"
+## 6:15 – 7:00 — NEXT 2026 e Encerramento (critério D + fechamento)
+**[Slide 11]**
+> "Sobre o NEXT 2026: não, infelizmente não conseguiremos expor no NEXT 2026."
+> "O GovFlow AI já tem cerca de 90% do MVP funcional rodando de ponta a ponta, com dois robôs de RPA,
+> gestão de usuários e clientes, banco de dados em nuvem, IA e automação reais — tudo com requests
+> reais de gravação e leitura demonstrados ao vivo. GovFlow AI: menos tempo em portal, mais tempo com
+> o cliente. Obrigado!"
 
 ---
 
-## Query de apoio para a demonstração de leitura (item "e")
+## Queries de apoio para a demonstração de leitura
 
-Rodar no SQL Editor do Neon, ao vivo, durante a gravação:
+Rodar no SQL Editor do Neon, ao vivo, durante a gravação.
 
+**Automações da Redesim (com CNPJ/Razão Social já extraídos):**
 ```sql
 SELECT
     f.protocolo_gerado,
+    f.cnpj,
+    f.razao_social,
     f.confianca_ocr,
     f.tempo_processamento_total_seg,
     f.tempo_economizado_seg,
@@ -109,16 +142,28 @@ ORDER BY f.criado_em DESC
 LIMIT 5;
 ```
 
+**Clientes cadastrados para consulta e-CAC (segundo robô), com o resultado da última consulta:**
+```sql
+SELECT nome, cpf, status_consulta, declaracoes, atualizado_em
+FROM clientes_ecac
+ORDER BY atualizado_em DESC NULLS LAST
+LIMIT 5;
+```
+
 ## Checklist antes de gravar
 - [ ] Servidor Node rodando (`node server.js`) e serviço de OCR rodando (`ocr-service`), ambos
       conectados ao Neon (`DATABASE_URL` preenchida no `.env`)
 - [ ] Login de teste já configurado (evita perder tempo com formulários na gravação)
 - [ ] Documento de teste pronto (`ocr-service/test-fixtures/contrato-social.pdf`) ou um documento real
+- [ ] Pelo menos dois clientes já cadastrados em "Consulta e-CAC" com CPFs de paridades diferentes
+      (ou prontos para cadastrar ao vivo)
 - [ ] Aba do Neon aberta (Tables + SQL Editor) em outra janela/monitor, pronta para alternar
-- [ ] Query de leitura (acima) já digitada, só faltando rodar
-- [ ] Slides abertos em modo apresentação para a abertura, arquitetura e time
-- [ ] Fotos + nomes + RMs de todos os integrantes prontos
-- [ ] Frase de disponibilidade para o NEXT 2026 definida pelo grupo, decorada ou escrita na tela
+- [ ] Queries de leitura (acima) já digitadas, só faltando rodar
+- [ ] Slides abertos em modo apresentação (`GovFlow-AI-Apresentacao-EC.pptx`)
+- [ ] Fotos + nomes + RMs de todos os integrantes prontos (substituir os placeholders `[FOTO]` no
+      slide 10 antes de exportar a versão final)
+- [ ] Frase de disponibilidade para o NEXT 2026 definida pelo grupo — já cravada nos slides e no
+      roteiro: "Não, infelizmente não conseguiremos expor no NEXT 2026."
 
 ## Após gravar
 1. Publicar no YouTube como **"Não listado"** (não "Privado")
