@@ -1,70 +1,132 @@
-# Roteiro do Vídeo de Demonstração — GovFlow AI
+# Roteiro do Vídeo-Pitch — Startup One (FIAP)
 **Duração alvo: até 5 minutos — YouTube não listado**
 
-Sugestão de gravação: compartilhar tela alternando entre os slides (`docs/apresentacao/GovFlow-AI-Apresentacao.pdf` ou o `.pptx` em modo apresentação) e o navegador com o sistema rodando. Ferramentas simples como OBS Studio, Loom ou a gravação de tela nativa do Windows (Win+Alt+R) funcionam bem.
+Estrutura alinhada às 6 seções avaliadas (5 pts cada, 30 pts totais): (a) Problema e Solução,
+(b) Detalhes do Negócio — mercado, proposta de valor, concorrentes e diferenciais, receita e
+projeções financeiras com breakeven, (c) Produto, (d) Go to Market, (e) Road Map, (f) Time
+(com disponibilidade para o NEXT 2026). Cada slide traz, no canto superior direito, um selo com
+a letra do critério e a faixa de tempo — facilita a correção.
+
+Este roteiro reflete o **estado atual do projeto** (não o instantâneo da entrega da Fase 5, que
+foi registrada antes do projeto avançar): dois robôs de RPA, login real via banco, gestão de
+usuários e de clientes, e histórico completo com CNPJ/Razão Social já estão prontos e testados.
+
+Sugestão de gravação: tela dividida ou alternada entre os slides (`GovFlow-AI-Apresentacao.pptx`
+em modo apresentação) e o navegador/terminal para o trecho ao vivo do Produto. OBS Studio, Loom
+ou a gravação nativa do Windows (Win+Alt+R) resolvem.
 
 ---
 
-## 0:00 – 0:30 — Abertura (Slide 1: Capa)
-> "Olá! Eu sou [seu nome], e este é o GovFlow AI — uma automação inteligente de processos governamentais
-> para contadores. Contadores como o Roberto, nosso persona, perdem boa parte do tempo útil do escritório
-> em trabalho manual: triagem de documentos, redigitação de dados, protocolo em portais como o Redesim.
-> Nos próximos minutos vou mostrar a evolução do projeto e o sistema rodando de verdade."
+## 0:00 – 0:10 — Capa
+**[Slide 1]**
+> "Olá! Este é o GovFlow AI — automação inteligente de processos governamentais para escritórios
+> de contabilidade. Nos próximos cinco minutos: o problema e a solução, o mercado, o produto, a
+> estratégia de entrada, o que vem a seguir, e quem está por trás do projeto."
 
-## 0:30 – 1:15 — O que evoluiu (Slide 2)
-> "Desde a última entrega, o projeto saiu de uma prova de conceito — uma única rota sem banco de dados,
-> sem autenticação, com dashboard todo simulado — para um MVP funcional de ponta a ponta: Hub conversacional
-> com eventos em tempo real, SSO real, banco de dados em nuvem, motor de OCR real em Python, e um robô RPA
-> que só age depois de uma confirmação humana explícita."
+## 0:10 – 0:45 — Problema e Solução (Critério A)
+**[Slide 2]**
+> "Roberto, nosso persona, é sócio de um escritório de contabilidade. Ele perde boa parte do
+> tempo útil do escritório em trabalho manual: triagem de documentos, redigitação de dados,
+> protocolo em portais como o Redesim e o e-CAC — um processo que leva em média 40 minutos só
+> pra abrir uma empresa, e se repete a cada cliente. O GovFlow AI resolve isso: o contador envia
+> um documento pelo webchat ou pelo portal, com login validado contra o banco de dados; uma IA
+> extrai CNPJ, Razão Social e sócios em segundos; um robô preenche o portal do governo e devolve
+> o protocolo, exibido na própria tela; e o processo cai para poucos minutos, com histórico
+> completo gravado."
 
-## 1:15 – 2:00 — Arquitetura e decisão de produto (Slides 3 e 4)
-> "A arquitetura é dividida em 3 camadas: o Hub de Convergência, que é a porta de entrada — hoje um webchat,
-> pronto para receber o WhatsApp Business real sem mudar a lógica; a camada de Aplicação, com o motor de OCR
-> e o motor RPA; e o Painel de Gestão, o dashboard do contador.
->
-> Uma decisão de produto que quero destacar: o robô não age sozinho. A IA extrai os dados do documento
-> automaticamente, mas acionar o robô contra o portal do governo — uma ação real, de baixo custo de reverter —
-> exige um clique explícito do usuário depois de ele revisar os dados extraídos."
+## 0:45 – 1:20 — Mercado, Proposta de Valor e Receita (Critério B)
+**[Slide 3]**
+> "O mercado-alvo são escritórios de contabilidade de pequeno e médio porte no Brasil — a mesma
+> persona Roberto, multiplicada por milhares de escritórios que fazem esse trabalho manualmente
+> todo santo dia. A proposta de valor é objetiva: transformar um processo de 40 minutos em um
+> fluxo de poucos minutos, com cada automação já nascendo com o tempo economizado registrado —
+> prova de ROI mensurável desde o primeiro uso, sem precisar confiar na nossa palavra. O modelo
+> de receita é Freemium: plano Free com 5 documentos por mês, plano Pro a R$299 com 100
+> documentos, e onboarding assistido gratuito para os primeiros 50 escritórios-piloto."
 
-## 2:00 – 4:00 — Demonstração ao vivo (sistema rodando)
-**[Trocar para o navegador]**
+## 1:20 – 1:55 — Concorrentes e Diferenciais (Critério B)
+**[Slide 4]**
+> "Pesquisamos o mercado e não encontramos nenhum concorrente direto — nenhum assistente
+> conversacional com IA e RPA cobrindo múltiplos portais do governo, voltado a escritórios de
+> contabilidade. Existe concorrência indireta: ERPs contábeis tradicionais, como Domínio,
+> Alterdata e Questor, que são sistemas de gestão completos mas sem IA conversacional nem RPA
+> ponta a ponta; ferramentas de captura pontual, como e-Auditoria e Robolabs, que só automatizam
+> arquivos já estruturados, não documentos como um Contrato Social escaneado; e plataformas de
+> gestão e BI, como Nibo, focadas em gestão financeira, não em executar ações reais contra
+> portais do governo. Nosso diferencial: hub conversacional como porta de entrada, leitura de
+> documento não estruturado, confirmação humana antes de qualquer ação real, cobertura de
+> múltiplos serviços num único painel, e um preço Freemium acessível."
 
-1. **Login SSO** — mostrar o acesso ao dashboard, login único.
-2. **Upload de documento** — arrastar um documento real (ou o PDF de teste em
-   `ocr-service/test-fixtures/contrato-social.pdf`) e clicar "Iniciar Processamento".
-3. **OCR em tempo real** — apontar o console mostrando os eventos reais chegando, e o card "Dados Extraídos"
-   populando com CNPJ, Razão Social, Capital Social, Sócios — dados de verdade, extraídos pelo Tesseract.
-4. **Pausa para confirmação** — destacar que o processamento parou e o botão "Enviar ao Gov.br" está
-   habilitado, esperando o clique.
-5. **Clicar "Enviar ao Gov.br"** — mostrar o robô preenchendo o portal em tempo real pelo console, até o
-   protocolo final aparecer.
+## 1:55 – 2:35 — Projeções Financeiras e Breakeven (Critério B)
+**[Slide 5]**
+> "Os números: margem de contribuição de R$219 por cliente do plano Pro por mês, CAC de R$250,
+> uma relação LTV sobre CAC de 15,77 vezes — bem acima do benchmark de mercado, que considera
+> saudável qualquer coisa acima de 3 vezes. O breakeven operacional — quando a margem de
+> contribuição dos clientes pagos cobre o custo fixo mensal de R$3.800 — é atingido no Mês 3, com
+> 18 clientes pagos ativos, exatamente conforme a meta. O fluxo de caixa acumulado, por causa do
+> investimento em aquisição de clientes, só se aproxima do equilíbrio no Mês 6, com breakeven de
+> caixa projetado para o Mês 8 — um padrão esperado e saudável para uma startup SaaS em estágio
+> inicial."
 
-> "Viram: o documento foi lido de verdade, os dados aparecem aqui no painel, e só depois que eu clico em
-> Enviar é que o robô entra em ação — preenche o formulário e volta com o protocolo."
+## 2:35 – 3:20 — Produto (Critério C)
+**[Slide 6]**
+> "Como o produto funciona, na prática: o contador envia o documento — login real, não
+> simulado; a IA extrai os dados com OCR e NLP; o usuário revisa e confirma o envio; e o robô
+> preenche o portal e devolve o protocolo, gravado no banco em nuvem. E não é um robô só: são
+> dois. O robô da Redesim, em Node.js com Puppeteer, cuida da abertura de empresa. O robô de
+> Consulta e-CAC, em Python com Playwright, loga como o cliente selecionado e extrai a situação
+> da declaração de Imposto de Renda. Os dois seguem a mesma regra: nunca agem sozinhos, sempre
+> esperam a confirmação explícita do usuário."
+- Se sobrar tempo/for gravar uma versão estendida: cortar rapidamente para o app real, mostrando
+  o upload, o card "Dados Extraídos" populando, e o clique em "Enviar ao Gov.br".
 
-## 4:00 – 4:40 — Viabilidade financeira (Slide 7)
-> "Do lado do negócio: o modelo é Freemium, R$299 por mês no plano Pro. A margem de contribuição por
-> cliente é de R$219, o CAC é R$250, e o LTV projetado é de quase R$4.000 — uma relação LTV sobre CAC de
-> quase 16 vezes, bem acima do que o mercado considera saudável. Com esses números, o breakeven operacional
-> — 18 clientes pagos — é atingido já no terceiro mês de operação."
+## 3:20 – 3:50 — Go to Market (Critério D)
+**[Slide 7]**
+> "Nossa estratégia de entrada no mercado tem quatro frentes: o Hub de Convergência, com
+> parceria Claro e WhatsApp Business, aproveitando a base corporativa da operadora sem custo de
+> mídia paga; marketing direto a escritórios contábeis, com conteúdo educativo; parcerias
+> institucionais com Conselhos Regionais de Contabilidade e sindicatos de classe; e um programa
+> de indicação entre contadores. Para acelerar a curva de aprendizado, a promoção de lançamento
+> oferece onboarding assistido gratuito para os primeiros 50 escritórios-piloto."
 
-## 4:40 – 5:00 — Encerramento (Slide 9)
-> "O GovFlow AI já tem cerca de 80% do MVP funcional rodando de ponta a ponta, com programação real de
-> front-end, back-end, IA e banco de dados em nuvem. O código está público no GitHub, e a documentação
-> completa acompanha esta entrega. Obrigado!"
+## 3:50 – 4:15 — Road Map (Critério E)
+**[Slide 8]**
+> "Desde a última entrega, o projeto avançou bastante: o segundo robô, o login real via banco,
+> a gestão de usuários e clientes, e o histórico completo com CNPJ e Razão Social já estão
+> prontos e testados. O que continua como próximo passo real: integração de verdade com a
+> WhatsApp Business API — hoje o webchat já usa o mesmo contrato de eventos, pronto pra isso
+> entrar sem reescrever nada; uma fila de mensagens assíncrona de verdade, com Redis; migração
+> do front-end para React e Tailwind; e extração de atos societários pelo motor de OCR — hoje a
+> gente lê CNPJ, Razão Social, Capital Social e o quadro de sócios, mas ainda não o tipo de ato
+> registrado na Junta Comercial, como constituição ou alteração contratual."
+
+## 4:15 – 4:45 — Time e NEXT 2026 (Critério F)
+**[Slide 9]**
+> "Esse projeto foi desenvolvido por Pedro Henrique Amancio Lopes, RM551682, e Felipe Vazamim,
+> RM97856."
+- Mostrar o slide com foto + nome completo + RM de cada integrante.
+> "Sobre o NEXT 2026: não, infelizmente não conseguiremos expor no NEXT 2026."
+
+## 4:45 – 5:00 — Conclusão
+**[Slide 10]**
+> "Resumindo: dois robôs de RPA reais, gestão completa de usuários e clientes, requests reais de
+> gravação e leitura contra o PostgreSQL no Neon, e um unit economics saudável. GovFlow AI —
+> menos tempo em portal, mais tempo com o cliente. Obrigado!"
 
 ---
 
 ## Checklist antes de gravar
-- [ ] Servidor Node rodando (`node server.js`) e serviço de OCR rodando (`ocr-service`)
-- [ ] Banco de dados em nuvem conectado (não local)
-- [ ] Login de teste já configurado (evita perder tempo com formulários na gravação)
-- [ ] Documento de teste pronto (`ocr-service/test-fixtures/contrato-social.pdf`) ou um documento real
-- [ ] Slides abertos em modo apresentação, prontos para alternar com o navegador
+- [ ] Slides abertos em modo apresentação (`docs/apresentacao/GovFlow-AI-Apresentacao.pptx`)
+- [ ] Se for incluir o corte ao vivo no Produto (slide 6): servidor Node e serviço de OCR
+      rodando, ambos conectados ao Neon (`DATABASE_URL` preenchida no `.env`), login de teste já
+      configurado, documento de teste pronto
+- [ ] Fotos dos integrantes prontas para substituir os placeholders `[FOTO]` no slide 9
+- [ ] Frase do NEXT 2026 decorada ou escrita na tela: *"Não, infelizmente não conseguiremos
+      expor no NEXT 2026."*
+- [ ] Cronômetro visível para não estourar os 5 minutos
 
 ## Após gravar
-1. Publicar no YouTube como **"Não listado"** (não "Privado" — o professor precisa acessar sem login)
-2. Copiar o link e substituir os placeholders `[PREENCHER: link do vídeo]` em:
-   - `docs/entrega-fase5/GovFlow-AI-Documentacao-Fase5.docx` (seção 4)
-   - `docs/apresentacao/GovFlow-AI-Apresentacao.pptx` (adicionar na capa ou conclusão)
-3. Reexportar os dois para PDF novamente após colar o link
+1. Publicar no YouTube como **"Não listado"** (não "Privado")
+2. Substituir `[PREENCHER: link do vídeo]` pelo link, na seção 4 (Anexos) e no cabeçalho de
+   `docs/entrega-fase5/GovFlow-AI-Documentacao-Fase5.docx`, depois reexportar para PDF
+3. Conferir que o vídeo não ultrapassa 5 minutos
